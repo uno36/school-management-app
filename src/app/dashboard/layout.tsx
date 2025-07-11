@@ -1,27 +1,59 @@
-import Header from '@/components/shared/Header';
-import Footer from '@/components/shared/Footer';
+"use client";
+import { useState } from "react";
+import Sidebar from "@/components/shared/sidebar";
+import Header from "@/components/shared/Header";
+import Footer from "@/components/shared/Footer";
 
-interface DashboardLayoutProps {
+export default function DashboardLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
+}) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Add a state for mobile sidebar visibility if your Header needs to control it
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-/**
- * DashboardLayout component wraps all pages within the (dashboard) route group.
- * It provides a consistent header and footer for authenticated routes.
- *
- * NOTE: In a real Next.js app, the <html> and <body> tags, along with global
- * CSS imports and metadata, would typically be in the root app/layout.tsx.
- * For this isolated environment, we are adjusting the structure to avoid
- * DOM nesting warnings.
- */
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-      <main className="flex-grow pt-16"> {/* pt-16 to account for fixed header height */}
-        {children}
-      </main>
+    <>
+      <div className="flex h-screen bg-gray-50">
+        {/* Sidebar Component */}
+        <Sidebar
+          isOpen={!isCollapsed} // Pass the opposite of isCollapsed for isOpen
+          isCollapsed={isCollapsed}
+          toggleSidebar={toggleSidebar}
+          // If your Sidebar also manages its own mobile state, ensure it's properly handled
+          // or pass isMobileSidebarOpen if the Header is controlling it
+        />
+
+        {/* Main Content Area */}
+        <div
+          className={`flex-1 flex flex-col overflow-hidden
+            ${isCollapsed ? "md:ml-20" : "md:ml-64"}
+          `}
+        >
+          {/* Header */}
+          <Header
+            toggleSidebar={toggleSidebar}
+            toggleMobileSidebar={toggleMobileSidebar}
+          />{" "}
+          {/* Pass toggleMobileSidebar if Header needs it */}
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto pt-10">
+            {" "}
+            {/* Use flex-1 to make main fill available space */}
+            <div className="p-4">{children}</div>
+          </main>
+        </div>
+      </div>
       <Footer />
-    </div>
+    </>
   );
 }

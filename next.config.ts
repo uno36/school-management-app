@@ -3,7 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
-    domains: ["placehold.co"], // ✅ allow external images from placehold.co
+    dangerouslyAllowSVG: true, // ⚠️ Not recommended unless 100% trusted
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        pathname: '/**',
+      },
+    ],
   },
 };
 

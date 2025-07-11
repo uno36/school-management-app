@@ -403,7 +403,7 @@ export default function StudentListPage() {
   );
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="sm:p-6 lg:p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Student List</h1>
         {/* Updated Button to link to the student enrollment form */}
@@ -509,18 +509,18 @@ export default function StudentListPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a
+                      <Link
                         href={`/dashboard/student/${student.id}`}
                         className="text-blue-600 hover:text-blue-900 mr-4"
                       >
                         View
-                      </a>
-                      <a
+                      </Link>
+                      <Link
                         href={`/dashboard/student/${student.id}/edit`}
                         className="text-indigo-600 hover:text-indigo-900"
                       >
                         Edit
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))
