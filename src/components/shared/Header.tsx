@@ -1,37 +1,59 @@
 // frontend/components/shared/Header.tsx
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   toggleSidebar: () => void;
-  // Add this new prop to the interface
-  toggleMobileSidebar: () => void;
+  toggleMobileSidebar?: () => void; // Made optional since it wasn't used in your original code
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
-  // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure the component is mounted before showing the theme switcher
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-40">
+    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 fixed top-0 left-0 right-0 z-40">
       <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         {/* Left side - Sidebar toggle and logo */}
         <div className="flex items-center">
           <button
             onClick={toggleSidebar}
-            className="mr-4 p-1 rounded-md hover:bg-gray-100 focus:outline-none"
+            className="mr-4 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
             aria-label="Toggle sidebar"
           >
-            <Menu className="h-6 w-6 text-gray-600" />
+            <Menu className="h-6 w-6 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
 
         {/* Right side - User actions */}
         <div className="flex items-center space-x-4">
-          <button className="p-1 rounded-full hover:bg-gray-100">
+          {/* Theme switcher */}
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-6 w-6 text-gray-600 dark:text-yellow-300" />
+              ) : (
+                <Moon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              )}
+            </button>
+          )}
+
+          <button className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-gray-600"
+              className="h-6 w-6 text-gray-600 dark:text-gray-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -47,8 +69,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
           <div className="relative">
             <button className="flex items-center space-x-2 focus:outline-none">
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-600 font-medium">AD</span>
+              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-300 font-medium">
+                  AD
+                </span>
               </div>
             </button>
           </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import React, { useState, useEffect } from "react";
+// frontend/app/(dashboard)/student/disciplinary-records/page.tsx
+import Link from "next/link";
+import React, { useState } from "react";
 
 // --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -37,260 +38,217 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 Button.displayName = "Button";
-// --- End Shadcn UI Component Mockups ---
 
-interface StaffProfileData {
-  id: string;
-  staffId: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: Date | null;
-  gender: string;
-  contactNumber: string;
-  email: string;
-  address: string;
-  qualification: string;
-  experience: string;
-  designation: string;
-  department: string;
-  joiningDate: Date | null;
-  employmentStatus:
-    | "Full-time"
-    | "Part-time"
-    | "Contract"
-    | "Intern"
-    | "Active"
-    | "On Leave"
-    | "Terminated";
-  salaryInformation: string;
-  bankDetails: string;
-  emergencyContactName: string;
-  emergencyContactRelationship: string;
-  emergencyContactPhone: string;
-  photoUrl: string;
-  resumeUrl: string;
-  idProofUrl: string;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  type?: string;
 }
 
-const allMockStaffData: StaffProfileData[] = [
-  {
-    id: "S001",
-    staffId: "EMP001",
-    firstName: "John",
-    lastName: "Doe",
-    dateOfBirth: new Date("1980-05-20"),
-    gender: "Male",
-    contactNumber: "+1 (111) 222-3333",
-    email: "john.doe@school.com",
-    address: "123 Teacher Lane, Schoolville, USA",
-    qualification: "Master of Education",
-    experience: "15",
-    designation: "Head Teacher",
-    department: "Academics",
-    joiningDate: new Date("2008-09-01"),
-    employmentStatus: "Full-time",
-    salaryInformation: "$75,000/year",
-    bankDetails: "Bank of America, Acct: ****1234",
-    emergencyContactName: "Jane Doe",
-    emergencyContactRelationship: "Spouse",
-    emergencyContactPhone: "+1 (111) 222-4444",
-    photoUrl: "https://placehold.co/150x150/aabbcc/ffffff?text=John",
-    resumeUrl: "https://placehold.co/200x100/aabbcc/ffffff?text=John+Resume",
-    idProofUrl: "https://placehold.co/200x100/aabbcc/ffffff?text=John+ID",
-  },
-  {
-    id: "S002",
-    staffId: "EMP002",
-    firstName: "Jane",
-    lastName: "Smith",
-    dateOfBirth: new Date("1975-11-10"),
-    gender: "Female",
-    contactNumber: "+1 (555) 666-7777",
-    email: "jane.smith@school.com",
-    address: "456 Admin Road, Schoolville, USA",
-    qualification: "MBA",
-    experience: "20",
-    designation: "Administrator",
-    department: "Administration",
-    joiningDate: new Date("2003-01-15"),
-    employmentStatus: "Full-time",
-    salaryInformation: "$85,000/year",
-    bankDetails: "Wells Fargo, Acct: ****5678",
-    emergencyContactName: "Robert Smith",
-    emergencyContactRelationship: "Brother",
-    emergencyContactPhone: "+1 (555) 666-8888",
-    photoUrl: "https://placehold.co/150x150/ccbbaa/ffffff?text=Jane",
-    resumeUrl: "https://placehold.co/200x100/ccbbaa/ffffff?text=Jane+Resume",
-    idProofUrl: "https://placehold.co/200x100/ccbbaa/ffffff?text=Jane+ID",
-  },
-  {
-    id: "S003",
-    staffId: "EMP003",
-    firstName: "Peter",
-    lastName: "Jones",
-    dateOfBirth: new Date("1990-03-01"),
-    gender: "Male",
-    contactNumber: "+1 (999) 000-1111",
-    email: "peter.jones@school.com",
-    address: "789 Science St, Schoolville, USA",
-    qualification: "PhD in Physics",
-    experience: "8",
-    designation: "Science Teacher",
-    department: "Academics",
-    joiningDate: new Date("2015-08-20"),
-    employmentStatus: "On Leave",
-    salaryInformation: "$60,000/year",
-    bankDetails: "Chase Bank, Acct: ****9012",
-    emergencyContactName: "Mary Jones",
-    emergencyContactRelationship: "Mother",
-    emergencyContactPhone: "+1 (999) 000-2222",
-    photoUrl: "https://placehold.co/150x150/ccddff/ffffff?text=Peter",
-    resumeUrl: "https://placehold.co/200x100/ccddff/ffffff?text=Peter+Resume",
-    idProofUrl: "https://placehold.co/200x100/ccddff/ffffff?text=Peter+ID",
-  },
-];
-
-export default function StaffDetailsPage() {
-  const [staffId, setStaffId] = useState<string | undefined>();
-  const [staff, setStaff] = useState<StaffProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const pathSegments = window.location.pathname
-      .split("/")
-      .filter((segment) => segment !== "");
-    const staffIndex = pathSegments.indexOf("staff");
-    if (staffIndex !== -1 && pathSegments.length > staffIndex + 1) {
-      const potentialId = pathSegments[staffIndex + 1];
-      if (pathSegments[staffIndex + 2] === "edit") {
-        setStaffId(potentialId);
-      } else {
-        setStaffId(potentialId);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!staffId) return;
-
-    const fetchStaffData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const foundStaff = allMockStaffData.find((s) => s.id === staffId);
-        if (foundStaff) {
-          setStaff(foundStaff);
-        } else {
-          setError(`Staff member with ID "${staffId}" not found.`);
-        }
-      } catch (err) {
-        setError("Failed to load staff data.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStaffData();
-  }, [staffId]);
-
-  if (loading) {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-xl text-gray-600">Loading staff data...</p>
-      </div>
+      <input
+        type={type}
+        className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        ref={ref}
+        {...props}
+      />
     );
   }
+);
+Input.displayName = "Input";
+// --- End Shadcn UI Component Mockups ---
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-xl text-red-600">Error: {error}</p>
-      </div>
-    );
-  }
+interface DisciplinaryRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  incidentDate: string; // YYYY-MM-DD
+  incidentType: string;
+  actionTaken: string;
+}
 
-  if (!staff) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-xl text-gray-600">Staff member not found.</p>
-      </div>
-    );
-  }
+/**
+ * DisciplinaryRecordListPage component displays a list of student disciplinary records.
+ * It includes a search bar and a button to add new records.
+ */
+export default function DisciplinaryRecordListPage() {
+  // Mock data for disciplinary records
+  const [records, setRecords] = useState<DisciplinaryRecord[]>([
+    {
+      id: "DR001",
+      studentId: "STU001",
+      studentName: "Alice Johnson",
+      incidentDate: "2025-05-10",
+      incidentType: "Tardiness",
+      actionTaken: "Verbal Warning",
+    },
+    {
+      id: "DR002",
+      studentId: "STU002",
+      studentName: "Bob Williams",
+      incidentDate: "2025-06-01",
+      incidentType: "Disruptive Behavior",
+      actionTaken: "Detention",
+    },
+    {
+      id: "DR003",
+      studentId: "STU001",
+      studentName: "Alice Johnson",
+      incidentDate: "2025-06-15",
+      incidentType: "Cheating",
+      actionTaken: "Suspension (1 day)",
+    },
+    {
+      id: "DR004",
+      studentId: "STU003",
+      studentName: "Charlie Davis",
+      incidentDate: "2025-07-01",
+      incidentType: "Vandalism",
+      actionTaken: "Parent Meeting & Restitution",
+    },
+  ]);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredRecords = records.filter(
+    (record) =>
+      record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.incidentType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.actionTaken.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.incidentDate.includes(searchTerm)
+  );
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50">
-      <div className="w-full max-w-5xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Staff Profile: {staff.firstName} {staff.lastName}
-          </h1>
-          <a href={`/staff/${staff.id}/edit`}>
-            <Button variant="outline">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-              Edit Profile
-            </Button>
-          </a>
-        </div>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Student Disciplinary Records
+        </h1>
+        <Link href="/dashboard/student/studentDisciplinaryRecord/add">
+          {" "}
+          {/* Link to add new record form */}
+          <Button variant="default" className="cursor-pointer">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            Add New Record
+          </Button>
+        </Link>
+      </div>
 
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <Image
-            width={150}
-            height={150}
-            src={
-              staff.photoUrl ||
-              "https://placehold.co/150x150/cccccc/333333?text=No+Photo"
-            }
-            alt={`${staff.firstName} ${staff.lastName}`}
-            className="rounded-full object-cover border-4 border-white shadow-md"
-          />
-          <div className="text-center md:text-left">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              {staff.firstName} {staff.lastName}
-            </h2>
-            <p className="text-lg text-gray-700">
-              Staff ID: <span className="font-medium">{staff.staffId}</span>
-            </p>
-            <p className="text-md text-gray-600">
-              Designation:{" "}
-              <span className="font-medium">{staff.designation}</span>
-            </p>
-            <p className="text-md text-gray-600">
-              Department:{" "}
-              <span className="font-medium">{staff.department}</span>
-            </p>
-            <p className="text-md text-gray-600">
-              Status:{" "}
-              <span
-                className={`font-medium ${
-                  staff.employmentStatus === "Active"
-                    ? "text-green-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {staff.employmentStatus}
-              </span>
-            </p>
-          </div>
-        </div>
+      <div className="mb-6">
+        <Input
+          type="text"
+          placeholder="Search by student name, ID, incident type, or date..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-lg"
+        />
+      </div>
 
-        {/* You already have the rest of the content for personal info, professional info, financial details, etc. Keep that unchanged */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Student Name
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Student ID
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Incident Date
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Incident Type
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Action Taken
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredRecords.length > 0 ? (
+                filteredRecords.map((record) => (
+                  <tr key={record.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {record.studentName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {record.studentId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {record.incidentDate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {record.incidentType}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {record.actionTaken}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Link
+                        href={`/dashboard/student/studentDisciplinaryRecord/${record.id}`}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/dashboard/student/studentDisciplinaryRecord/${record.id}/edit`}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-4 text-center text-sm text-gray-500"
+                  >
+                    No disciplinary records found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
