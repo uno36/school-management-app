@@ -1,12 +1,37 @@
 "use client";
 
+// import { useRouter } from "next/navigation";
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
 import Link from "next/link";
-import React, { useState } from "react";
 
-// --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
-// These are duplicated here to make this component self-contained and runnable.
-// In a real project, you would import these from a central UI library.
+// --- Theme Context Mock (Embedded for self-contained execution) ---
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+}
 
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    return {
+      theme: "light",
+      toggleTheme: () =>
+        console.warn("toggleTheme called outside ThemeProvider"),
+    };
+  }
+  return context;
+};
+// --- End Theme Context Mock ---
+
+// --- Mock Shadcn UI Component Mockups ---
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   type?: string;
 }
@@ -16,7 +41,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         type={type}
-        className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out ${className}`}
+        className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400`}
         ref={ref}
         {...props}
       />
@@ -39,15 +64,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const baseClasses =
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-all duration-200 ease-in-out";
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
     const variantClasses = {
-      default: "bg-blue-600 text-white shadow-md hover:bg-blue-700",
+      default:
+        "bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
       outline:
-        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm",
-      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm",
-      ghost: "hover:bg-gray-100 hover:text-gray-900",
-      link: "text-blue-600 underline-offset-4 hover:underline",
-      destructive: "bg-red-600 text-white hover:bg-red-700 shadow-md",
+        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm dark:border-blue-600 dark:text-blue-400 dark:hover:bg-gray-700",
+      secondary:
+        "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500",
+      ghost:
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100",
+      link: "text-blue-600 underline-offset-4 hover:underline dark:text-blue-400",
+      destructive:
+        "bg-red-600 text-white hover:bg-red-700 shadow-md dark:bg-red-700 dark:hover:bg-red-800",
     };
     const sizeClasses = {
       default: "h-10 px-4 py-2",
@@ -75,13 +104,13 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="relative">
         <select
-          className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 ease-in-out ${className}`}
+          className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100`}
           ref={ref}
           {...props}
         >
           {children}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -100,370 +129,541 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   }
 );
 Select.displayName = "Select";
-// --- End Shadcn UI Component Mockups ---
 
-// Mock Data for Attendance
-const mockStudentAttendance = [
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  href: string;
+  children: React.ReactNode;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+}
+
+interface AttendanceRecord {
+  id: string;
+  name: string;
+  type: "student" | "staff";
+  status: "Present" | "Absent" | "Late";
+  date: string;
+  time?: string;
+  reason?: string;
+}
+
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+const todayDateString = `${year}-${month}-${day}`;
+
+const initialMockAttendanceRecords: AttendanceRecord[] = [
   {
     id: "S001",
     name: "Alice Smith",
-    class: "7th Grade",
+    type: "student",
     status: "Present",
+    date: todayDateString,
     time: "08:00 AM",
   },
   {
     id: "S002",
     name: "Bob Johnson",
-    class: "8th Grade",
+    type: "student",
     status: "Absent",
-    reason: "Sick Leave",
+    date: todayDateString,
+    reason: "Sick",
   },
   {
     id: "S003",
     name: "Charlie Brown",
-    class: "7th Grade",
+    type: "student",
     status: "Late",
+    date: todayDateString,
     time: "08:15 AM",
-  },
-  {
-    id: "S004",
-    name: "Diana Prince",
-    class: "9th Grade",
-    status: "Present",
-    time: "07:55 AM",
+    reason: "Traffic",
   },
   {
     id: "S005",
     name: "Eve Adams",
-    class: "8th Grade",
+    type: "student",
     status: "Present",
+    date: todayDateString,
     time: "07:58 AM",
   },
   {
     id: "S006",
     name: "Frank White",
-    class: "7th Grade",
+    type: "student",
     status: "Absent",
+    date: todayDateString,
     reason: "Family Event",
   },
   {
     id: "S007",
-    name: "Grace Hall",
-    class: "9th Grade",
+    name: "Grace Taylor",
+    type: "student",
     status: "Present",
+    date: todayDateString,
     time: "08:02 AM",
   },
-];
-
-const mockStaffAttendance = [
+  {
+    id: "S008",
+    name: "Henry Green",
+    type: "student",
+    status: "Late",
+    date: todayDateString,
+    time: "08:20 AM",
+    reason: "Bus Delay",
+  },
+  {
+    id: "S009",
+    name: "Ivy King",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "07:59 AM",
+  },
+  {
+    id: "S010",
+    name: "Jack Lewis",
+    type: "student",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Vacation",
+  },
+  {
+    id: "S011",
+    name: "Karen Hall",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "08:01 AM",
+  },
+  {
+    id: "S012",
+    name: "Liam Young",
+    type: "student",
+    status: "Late",
+    date: todayDateString,
+    time: "08:10 AM",
+    reason: "Overslept",
+  },
+  {
+    id: "S017",
+    name: "Quinn Davis",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "07:57 AM",
+  },
+  {
+    id: "S018",
+    name: "Rachel Evans",
+    type: "student",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Family Emergency",
+  },
+  {
+    id: "S019",
+    name: "Sam Foster",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "08:03 AM",
+  },
+  {
+    id: "S020",
+    name: "Tina Green",
+    type: "student",
+    status: "Late",
+    date: todayDateString,
+    time: "08:18 AM",
+    reason: "Car Trouble",
+  },
+  {
+    id: "S021",
+    name: "Umar Khan",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "07:55 AM",
+  },
+  {
+    id: "S022",
+    name: "Victoria Lee",
+    type: "student",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Dental Appointment",
+  },
+  {
+    id: "S023",
+    name: "Walter Scott",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "08:00 AM",
+  },
+  {
+    id: "S024",
+    name: "Xavier Bell",
+    type: "student",
+    status: "Present",
+    date: todayDateString,
+    time: "07:59 AM",
+  },
+  {
+    id: "S025",
+    name: "Yara Cruz",
+    type: "student",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Personal Day",
+  },
   {
     id: "T001",
     name: "Mr. Davis",
-    department: "Math",
+    type: "staff",
     status: "Present",
+    date: todayDateString,
     time: "07:45 AM",
   },
   {
     id: "T002",
     name: "Ms. Lee",
-    department: "Science",
-    status: "Present",
-    time: "07:50 AM",
+    type: "staff",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Personal Leave",
   },
   {
     id: "T003",
     name: "Dr. Evans",
-    department: "Administration",
-    status: "Absent",
-    reason: "Conference",
+    type: "staff",
+    status: "Present",
+    date: todayDateString,
+    time: "07:50 AM",
   },
   {
     id: "T004",
-    name: "Mrs. Green",
-    department: "English",
+    name: "Mrs. Clark",
+    type: "staff",
     status: "Late",
-    time: "08:10 AM",
+    date: todayDateString,
+    time: "08:05 AM",
+    reason: "Appointment",
   },
   {
     id: "T005",
     name: "Mr. White",
-    department: "Sports",
+    type: "staff",
     status: "Present",
-    time: "07:59 AM",
+    date: todayDateString,
+    time: "07:48 AM",
+  },
+  {
+    id: "T006",
+    name: "Ms. Brown",
+    type: "staff",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Sick Leave",
+  },
+  {
+    id: "T009",
+    name: "Ms. Green",
+    type: "staff",
+    status: "Present",
+    date: todayDateString,
+    time: "07:52 AM",
+  },
+  {
+    id: "T010",
+    name: "Mr. Hall",
+    type: "staff",
+    status: "Absent",
+    date: todayDateString,
+    reason: "Conference",
+  },
+  {
+    id: "T011",
+    name: "Mr. Jones",
+    type: "staff",
+    status: "Present",
+    date: todayDateString,
+    time: "07:42 AM",
+  },
+  {
+    id: "S004",
+    name: "Diana Prince",
+    type: "student",
+    status: "Present",
+    date: "2025-07-12",
+    time: "07:55 AM",
+  },
+  {
+    id: "S013",
+    name: "Mia Scott",
+    type: "student",
+    status: "Present",
+    date: "2025-07-12",
+    time: "07:50 AM",
+  },
+  {
+    id: "S014",
+    name: "Noah Adams",
+    type: "student",
+    status: "Absent",
+    date: "2025-07-12",
+    reason: "Doctor Appointment",
+  },
+  {
+    id: "S015",
+    name: "Olivia Baker",
+    type: "student",
+    status: "Present",
+    date: "2025-07-12",
+    time: "08:00 AM",
+  },
+  {
+    id: "S016",
+    name: "Peter Clark",
+    type: "student",
+    status: "Late",
+    date: "2025-07-12",
+    time: "08:05 AM",
+    reason: "Traffic",
+  },
+  {
+    id: "T007",
+    name: "Mr. Taylor",
+    type: "staff",
+    status: "Present",
+    date: "2025-07-12",
+    time: "07:40 AM",
+  },
+  {
+    id: "T008",
+    name: "Dr. Moore",
+    type: "staff",
+    status: "Late",
+    date: "2025-07-12",
+    time: "08:00 AM",
+    reason: "Traffic",
   },
 ];
 
-const AttendancePage: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+const AttendanceListPage: React.FC = () => {
+  const { theme } = useTheme();
+  const [attendanceRecords] = useState<AttendanceRecord[]>(
+    initialMockAttendanceRecords
   );
-  const [attendanceType, setAttendanceType] = useState<"students" | "staff">(
-    "students"
+  const [filterType, setFilterType] = useState<"all" | "student" | "staff">(
+    "all"
   );
-  const [filterClassDept, setFilterClassDept] = useState("All"); // For filtering by class or department
-  const [searchTerm, setSearchTerm] = useState(""); // For searching by name or ID
+  const [filterDate, setFilterDate] = useState<string>(todayDateString);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Determine which data to display based on attendanceType
-  const currentData =
-    attendanceType === "students" ? mockStudentAttendance : mockStaffAttendance;
-
-  // Filtered data based on search term and class/department
-  const filteredData = currentData.filter((item) => {
+  const filteredRecords = attendanceRecords.filter((record) => {
+    const matchesType = filterType === "all" || record.type === filterType;
+    const matchesDate = record.date === filterDate;
     const matchesSearch =
       searchTerm === "" ||
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase());
-
-    let matchesFilter = true;
-    if (attendanceType === "students" && "class" in item) {
-      matchesFilter =
-        filterClassDept === "All" || item.class === filterClassDept;
-    } else if (attendanceType === "staff" && "department" in item) {
-      matchesFilter =
-        filterClassDept === "All" || item.department === filterClassDept;
-    }
-
-    return matchesSearch && matchesFilter;
+      record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesType && matchesDate && matchesSearch;
   });
 
-  // Extract unique classes/departments for filter dropdown
-  const uniqueClassDepts = Array.from(
-    new Set(
-      currentData
-        .map((item) =>
-          attendanceType === "students" && "class" in item
-            ? item.class
-            : attendanceType === "staff" && "department" in item
-            ? item.department
-            : ""
-        )
-        .filter(Boolean) // Filter out empty strings
-    )
-  );
+  // const router = useRouter();
+
+  // const handleViewDetails = (id: string) => {
+  //   router.push(`/dashboard/academic/attendance/${id}`);
+  // };
+
+  const handleDeleteRecord = (id: string) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the attendance record with ID: ${id}?`
+      )
+    ) {
+      alert(`Attendance record ${id} would be deleted here (simulated)`);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">
-          Attendance Management
-        </h1>
-        <Link href="/dashboard/academic/attendance/add">
-          {" "}
-          {/* Link to add new class/section form */}
-          <Button variant="default">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Add New Report
-          </Button>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 dark:text-gray-50">
+        Attendance Records
+      </h1>
 
-      {/* Filters and Actions */}
-      <section className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <section className="bg-white p-6 rounded-lg shadow-md mb-8 dark:bg-gray-800 dark:border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
             <label
-              htmlFor="attendance-date"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="filter-type"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
             >
-              Date
-            </label>
-            <Input
-              id="attendance-date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="attendance-type"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Type
+              Filter by Type
             </label>
             <Select
-              id="attendance-type"
-              value={attendanceType}
-              onChange={(e) => {
-                setAttendanceType(e.target.value as "students" | "staff");
-                setFilterClassDept("All"); // Reset filter when type changes
-              }}
+              id="filter-type"
+              value={filterType}
+              onChange={(e) =>
+                setFilterType(e.target.value as "all" | "student" | "staff")
+              }
               className="w-full"
             >
-              <option value="students">Students</option>
+              <option value="all">All</option>
+              <option value="student">Students</option>
               <option value="staff">Staff</option>
             </Select>
           </div>
           <div>
             <label
-              htmlFor="filter-class-dept"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="filter-date"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
             >
-              {attendanceType === "students" ? "Class" : "Department"}
+              Filter by Date
             </label>
-            <Select
-              id="filter-class-dept"
-              value={filterClassDept}
-              onChange={(e) => setFilterClassDept(e.target.value)}
+            <Input
+              id="filter-date"
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
               className="w-full"
-            >
-              <option value="All">All</option>
-              {uniqueClassDepts.map((option, index) => (
-                <option key={index} value={option}>
-                  {option}
-                </option>
-              ))}
-            </Select>
+            />
           </div>
           <div>
             <label
               htmlFor="search-term"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
             >
               Search
             </label>
             <Input
               id="search-term"
               type="text"
-              placeholder="Search by name or ID..."
+              placeholder="Search by name, ID, or reason"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
             />
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button variant="default" className="flex-1">
-            Apply Filters
-          </Button>
-          <Button variant="outline" className="flex-1">
-            Export Report
-          </Button>
+        <div className="flex justify-end">
+          <Link href="/dashboard/academic/attendance/add">
+            <Button variant="default" className="cursor-pointer">
+              Add New Record
+            </Button>
+          </Link>
         </div>
       </section>
 
-      {/* Attendance Table */}
-      <section className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">
-          {attendanceType === "students"
-            ? "Student Attendance Records"
-            : "Staff Attendance Records"}
+      <section className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4 dark:text-gray-50">
+          {filterType === "all"
+            ? "All Records"
+            : filterType === "student"
+            ? "Student Records"
+            : "Staff Records"}
+          ({filteredRecords.length}) for {filterDate}
         </h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
+          <table className="min-w-full bg-white rounded-lg overflow-hidden dark:bg-gray-800">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   ID
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Name
                 </th>
-                {attendanceType === "students" && (
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                    Class
-                  </th>
-                )}
-                {attendanceType === "staff" && (
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                    Department
-                  </th>
-                )}
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Type
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Status
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Time
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Reason
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredData.length > 0 ? (
-                filteredData.map((item, index) => (
+              {filteredRecords.length > 0 ? (
+                filteredRecords.map((record) => (
                   <tr
-                    key={index}
-                    className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50"
+                    key={record.id}
+                    className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                   >
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {item.id}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.id}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {item.name}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.name}
                     </td>
-                    {attendanceType === "students" && "class" in item && (
-                      <td className="py-3 px-4 text-sm text-gray-800">
-                        {item.class}
-                      </td>
-                    )}
-                    {attendanceType === "staff" && "department" in item && (
-                      <td className="py-3 px-4 text-sm text-gray-800">
-                        {item.department}
-                      </td>
-                    )}
+                    <td className="py-3 px-4 text-sm text-gray-800 capitalize dark:text-gray-200">
+                      {record.type}
+                    </td>
                     <td
                       className={`py-3 px-4 text-sm font-medium ${
-                        item.status === "Present"
+                        record.status === "Present"
                           ? "text-green-600"
-                          : item.status === "Absent"
+                          : record.status === "Absent"
                           ? "text-red-600"
                           : "text-orange-600"
                       }`}
                     >
-                      {item.status}
+                      {record.status}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {item.time || "N/A"}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.time || "N/A"}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {item.reason || "N/A"}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.reason || "N/A"}
                     </td>
-                    <td className="py-3 px-4 text-sm">
-                      <Button variant="secondary" size="sm" className="mr-4">
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Edit
+                    <td className="py-3 px-4 text-sm flex space-x-2">
+                      <Link
+                        href={`/dashboard/academic/attendance/${record.id}`}
+                      >
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="destructive"
+                        className="cursor-pointer"
+                        size="sm"
+                        onClick={() => handleDeleteRecord(record.id)}
+                      >
+                        Delete
                       </Button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-6 text-center text-gray-500">
-                    No attendance records found for the selected criteria.
+                  <td
+                    colSpan={7}
+                    className="py-6 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No attendance records found matching your criteria.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-500 mt-4">
-          This table displays daily attendance records. In a real system, data
-          would be fetched from a backend and updated dynamically.
+        <p className="text-xs text-gray-500 mt-4 dark:text-gray-400">
+          This table lists daily attendance records for students and staff.
         </p>
       </section>
     </div>
   );
 };
 
-export default AttendancePage;
+export default AttendanceListPage;

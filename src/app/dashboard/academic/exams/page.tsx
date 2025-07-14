@@ -60,7 +60,7 @@ Input.displayName = "Input";
 interface Exam {
   id: string;
   name: string;
-  type: "Mid-Term" | "Final" | "Unit Test" | "Quiz";
+  type: "Mid-Term" | "Final" | "Unit Test" | "Quiz" | "Deadline";
   academicYear: string;
   className: string;
   subject: string;

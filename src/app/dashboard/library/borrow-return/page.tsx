@@ -108,6 +108,7 @@ export default function BorrowReturnListPage() {
       bookId: "B003",
       borrowerName: "Bob Williams",
       borrowerId: "STU002",
+      borrowerType: "Staff",
       borrowDate: "2025-05-10",
       returnDate: "2025-05-25",
       dueDate: "2025-05-24", // Example: returned late

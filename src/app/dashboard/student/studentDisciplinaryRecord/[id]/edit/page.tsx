@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 
+// --- Updated PageProps to match Next.js type expectation ---
 interface PageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
-// --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
+// --- Mock Shadcn UI Component Mockups ---
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   type?: string;
 }
@@ -160,7 +159,7 @@ interface DisciplinaryRecordDetails {
   notes: string;
 }
 
-// Mock data for disciplinary records (same as details page)
+// Mock data for disciplinary records
 const allMockDisciplinaryRecords: DisciplinaryRecordDetails[] = [
   {
     id: "DR001",
@@ -217,8 +216,6 @@ const allMockDisciplinaryRecords: DisciplinaryRecordDetails[] = [
  * It receives the 'id' parameter from the route params.
  */
 export default function EditDisciplinaryRecordPage({ params }: PageProps) {
-  const { id: recordId } = params;
-
   const [formData, setFormData] = useState<DisciplinaryRecordDetails | null>(
     null
   );
@@ -230,19 +227,23 @@ export default function EditDisciplinaryRecordPage({ params }: PageProps) {
       setLoading(true);
       setError(null);
 
-      if (!recordId) {
-        setError("No Record ID provided in the URL.");
-        setLoading(false);
-        return;
-      }
-
       try {
+        // Resolve the params Promise
+        const currentParams = await params;
+        const recordId = currentParams.id;
+
+        if (!recordId) {
+          setError("No Record ID provided in the URL.");
+          setLoading(false);
+          return;
+        }
+
         const foundRecord = allMockDisciplinaryRecords.find(
           (r) => r.id === recordId
         );
 
         if (foundRecord) {
-          // Create a deep copy to ensure state updates correctly without mutating original mock data
+          // Create a deep copy to ensure state updates correctly
           setFormData(JSON.parse(JSON.stringify(foundRecord)));
         } else {
           setError(
@@ -258,7 +259,7 @@ export default function EditDisciplinaryRecordPage({ params }: PageProps) {
     };
 
     fetchRecordData();
-  }, [recordId]);
+  }, [params]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

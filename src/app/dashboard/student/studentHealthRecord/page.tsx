@@ -1,26 +1,82 @@
 "use client";
 
-// frontend/app/(dashboard)/student/health-records/page.tsx
 import Link from "next/link";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
 
-// --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
+// --- Theme Context Mock (Embedded for self-contained execution) ---
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    return {
+      theme: "light",
+      toggleTheme: () =>
+        console.warn("toggleTheme called outside ThemeProvider"),
+    };
+  }
+  return context;
+};
+// --- End Theme Context Mock ---
+
+// --- Mock Shadcn UI Component Mockups ---
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  type?: string;
+}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400`}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Input.displayName = "Input";
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "secondary" | "ghost" | "link";
+  variant?:
+    | "default"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
+    | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const baseClasses =
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
     const variantClasses = {
-      default: "bg-blue-600 text-white hover:bg-blue-700",
+      default:
+        "bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
       outline:
-        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50",
-      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-      ghost: "hover:bg-gray-100 hover:text-gray-900",
-      link: "text-blue-600 underline-offset-4 hover:underline",
+        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm dark:border-blue-600 dark:text-blue-400 dark:hover:bg-gray-700",
+      secondary:
+        "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500",
+      ghost:
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100",
+      link: "text-blue-600 underline-offset-4 hover:underline dark:text-blue-400",
+      destructive:
+        "bg-red-600 text-white hover:bg-red-700 shadow-md dark:bg-red-700 dark:hover:bg-red-800",
     };
     const sizeClasses = {
       default: "h-10 px-4 py-2",
@@ -39,202 +95,287 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  type?: string;
+// Mock Link component for navigation (simple anchor tag)
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  href: string;
+  children: React.ReactNode;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void; // Allow custom onClick
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-Input.displayName = "Input";
-// --- End Shadcn UI Component Mockups ---
-
+// Define types for health record
 interface HealthRecord {
   id: string;
   studentId: string;
   studentName: string;
+  dateOfRecord: string; // YYYY-MM-DD
   medicalConditions: string;
   allergies: string;
-  doctorName: string;
+  immunizations: string;
+  doctorName?: string;
+  doctorPhone?: string;
+  notes?: string;
 }
 
-/**
- * HealthRecordListPage component displays a list of student health records.
- * It includes a search bar and a button to add new records.
- */
-export default function HealthRecordListPage() {
-  // Mock data for health records
-  const [records, setRecords] = useState<HealthRecord[]>([
-    {
-      id: "HR001",
-      studentId: "STU001",
-      studentName: "Alice Johnson",
-      medicalConditions: "None",
-      allergies: "Pollen",
-      doctorName: "Dr. Emily White",
-    },
-    {
-      id: "HR002",
-      studentId: "STU002",
-      studentName: "Bob Williams",
-      medicalConditions: "Asthma",
-      allergies: "Peanuts",
-      doctorName: "Dr. John Smith",
-    },
-    {
-      id: "HR003",
-      studentId: "STU003",
-      studentName: "Charlie Davis",
-      medicalConditions: "Diabetes Type 1",
-      allergies: "None",
-      doctorName: "Dr. Sarah Lee",
-    },
-    {
-      id: "HR004",
-      studentId: "STU004",
-      studentName: "Diana Miller",
-      medicalConditions: "None",
-      allergies: "Dust Mites",
-      doctorName: "Dr. Emily White",
-    },
-  ]);
+// Mock data for health records
+const initialMockHealthRecords: HealthRecord[] = [
+  {
+    id: "HR001",
+    studentId: "S001",
+    studentName: "Alice Smith",
+    dateOfRecord: "2024-09-10",
+    medicalConditions: "Asthma (mild)",
+    allergies: "Pollen",
+    immunizations: "All standard childhood immunizations up-to-date.",
+    doctorName: "Dr. Emily White",
+    doctorPhone: "111-222-3333",
+    notes: "Requires inhaler during allergy season. Parents informed.",
+  },
+  {
+    id: "HR002",
+    studentId: "S002",
+    studentName: "Bob Johnson",
+    dateOfRecord: "2024-08-15",
+    medicalConditions: "None",
+    allergies: "Peanuts (severe)",
+    immunizations: "Up-to-date, including flu shot.",
+    doctorName: "Dr. Alex Green",
+    doctorPhone: "444-555-6666",
+    notes:
+      "EpiPen stored in nurse's office. All staff trained on anaphylaxis protocol.",
+  },
+  {
+    id: "HR003",
+    studentId: "S003",
+    studentName: "Charlie Brown",
+    dateOfRecord: "2024-09-01",
+    medicalConditions: "Eczema",
+    allergies: "Dust mites",
+    immunizations: "Missing MMR booster, parents notified.",
+    doctorName: "Dr. Sarah Lee",
+    doctorPhone: "777-888-9999",
+    notes: "Skin flare-ups managed with topical cream. Avoid dusty areas.",
+  },
+  {
+    id: "HR004",
+    studentId: "S004",
+    studentName: "Diana Prince",
+    dateOfRecord: "2024-07-20",
+    medicalConditions: "None",
+    allergies: "None",
+    immunizations: "Fully immunized.",
+    doctorName: "Dr. David Kim",
+    doctorPhone: "123-987-6543",
+    notes: "Healthy and active student.",
+  },
+  {
+    id: "HR005",
+    studentId: "S005",
+    studentName: "Eve Adams",
+    dateOfRecord: "2024-09-05",
+    medicalConditions: "Seasonal Allergies",
+    allergies: "Grass",
+    immunizations: "Up-to-date.",
+    doctorName: "Dr. Emily White",
+    doctorPhone: "111-222-3333",
+    notes: "Takes over-the-counter antihistamines as needed.",
+  },
+];
 
+const StudentHealthRecordListPage: React.FC = () => {
+  const { theme } = useTheme();
+  const router = useRouter();
+  const [records, setRecords] = useState<HealthRecord[]>(
+    initialMockHealthRecords
+  );
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterCondition, setFilterCondition] = useState("All");
 
-  const filteredRecords = records.filter(
-    (record) =>
+  // Extract unique medical conditions and allergies, then combine with 'All' and ensure overall uniqueness
+  const medicalConditions = Array.from(
+    new Set(
+      initialMockHealthRecords
+        .map((rec) => rec.medicalConditions.split(", ").map((c) => c.trim()))
+        .flat()
+    )
+  ).filter(Boolean);
+  const allergies = Array.from(
+    new Set(
+      initialMockHealthRecords
+        .map((rec) => rec.allergies.split(", ").map((a) => a.trim()))
+        .flat()
+    )
+  ).filter(Boolean);
+  const allFilters = Array.from(
+    new Set(["All", ...medicalConditions, ...allergies])
+  ).filter(Boolean); // Ensure overall uniqueness
+
+  const filteredRecords = records.filter((record) => {
+    const matchesSearch =
+      searchTerm === "" ||
       record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.medicalConditions
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       record.allergies.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.doctorName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      record.notes?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCondition =
+      filterCondition === "All" ||
+      record.medicalConditions.includes(filterCondition) ||
+      record.allergies.includes(filterCondition);
+    return matchesSearch && matchesCondition;
+  });
+
+  const handleDeleteRecord = (id: string) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete health record with ID: ${id}?`
+      )
+    ) {
+      setRecords((prevRecords) =>
+        prevRecords.filter((record) => record.id !== id)
+      );
+      alert(`Health record ${id} deleted successfully!`);
+    }
+  };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Student Health Records
-        </h1>
-        <Link href="/dashboard/student/studentHealthRecord/add">
-          {" "}
-          {/* Link to add new record form */}
-          <Button variant="default">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
+    <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 dark:text-gray-50">
+        Student Health Records
+      </h1>
+
+      {/* Filters and Actions */}
+      <section className="bg-white p-6 rounded-lg shadow-md mb-8 dark:bg-gray-800 dark:border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label
+              htmlFor="filter-condition"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Add New Record
-          </Button>
-        </Link>
-      </div>
+              Filter by Condition/Allergy
+            </label>
+            <select
+              id="filter-condition"
+              value={filterCondition}
+              onChange={(e) => setFilterCondition(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 ease-in-out dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            >
+              {allFilters.map((filter) => (
+                <option key={filter} value={filter}>
+                  {filter}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label
+              htmlFor="search-term"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
+            >
+              Search
+            </label>
+            <Input
+              id="search-term"
+              type="text"
+              placeholder="Search by student name, ID, or notes"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Link href="/dashboard/student/studentHealthRecord/add">
+            <Button variant="default" className="cursor-pointer">
+              Add New Record
+            </Button>
+          </Link>
+        </div>
+      </section>
 
-      <div className="mb-6">
-        <Input
-          type="text"
-          placeholder="Search by student name, ID, conditions, or doctor..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full max-w-lg"
-        />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+      {/* Health Records List Table */}
+      <section className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4 dark:text-gray-50">
+          Health Records ({filteredRecords.length})
+        </h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full bg-white rounded-lg overflow-hidden dark:bg-gray-800">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Student Name
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Record ID
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Student ID
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Student Name
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Medical Conditions
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Allergies
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Doctor
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {filteredRecords.length > 0 ? (
                 filteredRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {record.studentName}
+                  <tr
+                    key={record.id}
+                    className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                  >
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
                       {record.studentId}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {record.medicalConditions || "None"}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.studentName}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {record.allergies || "None"}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200 truncate max-w-xs">
+                      {record.medicalConditions}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {record.doctorName || "N/A"}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200 truncate max-w-xs">
+                      {record.allergies}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="py-3 px-4 text-sm flex space-x-2">
                       <Link
                         href={`/dashboard/student/studentHealthRecord/${record.id}`}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
                       >
-                        View
+                        <Button
+                          variant="outline"
+                          className="cursor-pointer"
+                          size="sm"
+                        >
+                          View
+                        </Button>
                       </Link>
                       <Link
-                        href={`/dashboard/student/studentHealthRecord/${record.id}/edit`}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        href={`/dashboard/student/studentHealthRecord${record.id}/edit`}
                       >
-                        Edit
+                        <Button
+                          variant="secondary"
+                          className="cursor-pointer"
+                          size="sm"
+                        >
+                          Edit
+                        </Button>
                       </Link>
+                      <Button
+                        variant="destructive"
+                        className="cursor-pointer"
+                        size="sm"
+                        onClick={() => handleDeleteRecord(record.id)}
+                      >
+                        Delete
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -242,16 +383,21 @@ export default function HealthRecordListPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-6 py-4 text-center text-sm text-gray-500"
+                    className="py-6 text-center text-gray-500 dark:text-gray-400"
                   >
-                    No health records found.
+                    No health records found matching your criteria.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+        <p className="text-xs text-gray-500 mt-4 dark:text-gray-400">
+          This table lists student health records.
+        </p>
+      </section>
     </div>
   );
-}
+};
+
+export default StudentHealthRecordListPage;

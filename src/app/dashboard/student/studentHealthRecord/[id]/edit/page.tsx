@@ -1,14 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
+// --- Theme Context Mock (Embedded for self-contained execution) ---
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
 }
 
-// --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    return {
+      theme: "light",
+      toggleTheme: () =>
+        console.warn("toggleTheme called outside ThemeProvider"),
+    };
+  }
+  return context;
+};
+// --- End Theme Context Mock ---
+
+// --- Mock Shadcn UI Component Mockups ---
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   type?: string;
 }
@@ -18,7 +39,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         type={type}
-        className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400`}
         ref={ref}
         {...props}
       />
@@ -28,21 +49,32 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "secondary" | "ghost" | "link";
+  variant?:
+    | "default"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
+    | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const baseClasses =
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
     const variantClasses = {
-      default: "bg-blue-600 text-white hover:bg-blue-700",
+      default:
+        "bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
       outline:
-        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50",
-      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-      ghost: "hover:bg-gray-100 hover:text-gray-900",
-      link: "text-blue-600 underline-offset-4 hover:underline",
+        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm dark:border-blue-600 dark:text-blue-400 dark:hover:bg-gray-700",
+      secondary:
+        "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500",
+      ghost:
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100",
+      link: "text-blue-600 underline-offset-4 hover:underline dark:text-blue-400",
+      destructive:
+        "bg-red-600 text-white hover:bg-red-700 shadow-md dark:bg-red-700 dark:hover:bg-red-800",
     };
     const sizeClasses = {
       default: "h-10 px-4 py-2",
@@ -67,220 +99,373 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ className, ...props }, ref) => (
     <label
       ref={ref}
-      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}
+      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className} dark:text-gray-300`}
       {...props}
     />
   )
 );
 Label.displayName = "Label";
-// --- End Shadcn UI Component Mockups ---
 
-interface HealthRecordDetails {
+// --- End Mock Shadcn UI Component Mockups ---
+
+// Define types for health record
+interface HealthRecord {
   id: string;
   studentId: string;
   studentName: string;
+  dateOfRecord: string; // YYYY-MM-DD
   medicalConditions: string;
   allergies: string;
   immunizations: string;
-  doctorName: string;
-  doctorPhone: string;
+  doctorName?: string;
+  doctorPhone?: string;
+  notes?: string;
 }
 
-const allMockHealthRecords: HealthRecordDetails[] = [
+// Mock data for health records (subset for edit page)
+const mockHealthRecords: HealthRecord[] = [
   {
     id: "HR001",
-    studentId: "STU001",
-    studentName: "Alice Johnson",
-    medicalConditions: "None",
-    allergies: "Pollen (seasonal)",
-    immunizations: "MMR, DTP, Polio (all up to date)",
+    studentId: "S001",
+    studentName: "Alice Smith",
+    dateOfRecord: "2024-09-10",
+    medicalConditions: "Asthma (mild)",
+    allergies: "Pollen",
+    immunizations: "All standard childhood immunizations up-to-date.",
     doctorName: "Dr. Emily White",
-    doctorPhone: "+1-555-111-2222",
+    doctorPhone: "111-222-3333",
+    notes:
+      "Requires inhaler during allergy season. Parents informed about emergency plan.",
   },
-  // ... other records
+  {
+    id: "HR002",
+    studentId: "S002",
+    studentName: "Bob Johnson",
+    dateOfRecord: "2024-08-15",
+    medicalConditions: "None",
+    allergies: "Peanuts (severe)",
+    immunizations: "Up-to-date, including flu shot.",
+    doctorName: "Dr. Alex Green",
+    doctorPhone: "444-555-6666",
+    notes:
+      "EpiPen stored in nurse's office. All staff trained on anaphylaxis protocol and food cross-contamination prevention.",
+  },
+  {
+    id: "HR003",
+    studentId: "S003",
+    studentName: "Charlie Brown",
+    dateOfRecord: "2024-09-01",
+    medicalConditions: "Eczema",
+    allergies: "Dust mites",
+    immunizations:
+      "Missing MMR booster, parents notified and follow-up scheduled for next month.",
+    doctorName: "Dr. Sarah Lee",
+    doctorPhone: "777-888-9999",
+    notes:
+      "Skin flare-ups managed with prescribed topical cream. Avoid dusty areas and ensure proper ventilation in classroom.",
+  },
 ];
 
-export default function EditHealthRecordPage({ params }: PageProps) {
-  const { id: recordId } = params;
-  const [formData, setFormData] = useState<HealthRecordDetails | null>(null);
+// Mock function to simulate updating a health record
+const updateHealthRecord = (record: HealthRecord): Promise<boolean> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Simulating updating health record:", record);
+      // In a real app, this would be an API call to your backend
+      resolve(true); // Simulate successful update
+    }, 1000); // Simulate network delay
+  });
+};
+
+interface StudentHealthRecordEditPageProps {
+  recordId?: string; // Simulate ID coming from URL (e.g., 'HR001')
+  onBack?: () => void; // Callback to navigate back
+}
+
+const StudentHealthRecordEditPage: React.FC<
+  StudentHealthRecordEditPageProps
+> = ({
+  recordId = "HR001", // Default for demonstration
+  onBack,
+}) => {
+  const { theme } = useTheme();
+
+  const [formData, setFormData] = useState<HealthRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [submissionStatus, setSubmissionStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
+  const [message, setMessage] = useState<string | null>(null);
 
+  // Effect to fetch data on component mount based on recordId
   useEffect(() => {
-    const fetchRecordData = async () => {
+    const fetchRecordData = async (id: string) => {
       setLoading(true);
-      setError(null);
-
+      setMessage(null);
       try {
-        const foundRecord = allMockHealthRecords.find((r) => r.id === recordId);
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API delay
+        const foundRecord = mockHealthRecords.find((rec) => rec.id === id);
 
         if (foundRecord) {
-          setFormData(JSON.parse(JSON.stringify(foundRecord)));
+          setFormData(JSON.parse(JSON.stringify(foundRecord))); // Deep copy
         } else {
-          setError(
-            `Health record with ID "${recordId}" not found for editing.`
-          );
+          setMessage(`Health record with ID "${id}" not found for editing.`);
         }
-      } catch (err) {
-        setError("Failed to load health record data for editing.");
-        console.error(err);
+      } catch (error) {
+        setMessage(
+          "Failed to load health record data for editing. Please try again."
+        );
+        console.error("Error fetching health record:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRecordData();
+    if (recordId) {
+      fetchRecordData(recordId);
+    } else {
+      setLoading(false);
+      setMessage("No record ID provided in the URL or invalid URL structure.");
+    }
   }, [recordId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
-    setFormData((prev) => (prev ? { ...prev, [id]: value } : null));
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            [id]: value,
+          }
+        : null
+    );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData) {
-      console.log("Updated Health Record Data:", formData);
-      alert("Health record updated successfully! Check console for data.");
+    setSubmissionStatus("submitting");
+    setMessage(null);
+
+    if (!formData) {
+      setMessage("No data to submit.");
+      setSubmissionStatus("error");
+      return;
+    }
+
+    // Basic validation
+    if (
+      !formData.studentId ||
+      !formData.studentName ||
+      !formData.dateOfRecord ||
+      !formData.medicalConditions ||
+      !formData.allergies ||
+      !formData.immunizations
+    ) {
+      setMessage(
+        "Please fill in all required fields (Student ID, Name, Date, Medical Conditions, Allergies, Immunizations)."
+      );
+      setSubmissionStatus("error");
+      return;
+    }
+
+    try {
+      const success = await updateHealthRecord(formData);
+      if (success) {
+        setSubmissionStatus("success");
+        setMessage(`Health record ${formData.id} updated successfully!`);
+      } else {
+        setSubmissionStatus("error");
+        setMessage("Failed to update health record. Please try again.");
+      }
+    } catch (error) {
+      setSubmissionStatus("error");
+      setMessage(
+        "An error occurred while updating the record. Please try again."
+      );
+      console.error("Error updating health record:", error);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
-          <p className="text-xl text-gray-600">
-            Loading health record data for editing...
-          </p>
-        </div>
+      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 flex items-center justify-center">
+        <p className="text-xl text-gray-600 dark:text-gray-400">
+          Loading health record...
+        </p>
       </div>
     );
   }
 
-  if (error || !formData) {
+  if (!formData) {
     return (
-      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">
+      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-xl text-center dark:bg-gray-800 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-400">
             Record Not Found
           </h2>
-          <p className="text-gray-700">
-            The health record for ID &quot;{recordId}&quot; could not be found
-            for editing.
+          <p className="text-gray-700 dark:text-gray-300">
+            {message || "The health record could not be found."}
           </p>
-          <Button className="mt-6" onClick={() => window.history.back()}>
-            Go Back
-          </Button>
+          {onBack && (
+            <Button onClick={onBack} className="mt-6">
+              Go Back to Health Records List
+            </Button>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 lg:p-8">
-      <div className="container mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Edit Health Record: {formData.studentName}
-          </h1>
-        </div>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen">
+      <div className="w-full max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50 mb-8 text-center">
+          Edit Health Record: {formData.id}
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Student Information (Read-only) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="studentName">Student Name</Label>
-              <Input
-                id="studentName"
-                type="text"
-                value={formData.studentName}
-                readOnly
-                disabled
-              />
-            </div>
             <div>
               <Label htmlFor="studentId">Student ID</Label>
               <Input
                 id="studentId"
                 type="text"
                 value={formData.studentId}
-                readOnly
-                disabled
+                onChange={handleChange}
+                required
+                disabled // Student ID typically not editable
+              />
+            </div>
+            <div>
+              <Label htmlFor="studentName">Student Name</Label>
+              <Input
+                id="studentName"
+                type="text"
+                value={formData.studentName}
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
 
-          {/* Health Details (Editable) */}
           <div>
-            <Label htmlFor="medicalConditions">Medical Conditions</Label>
+            <Label htmlFor="dateOfRecord">Date of Record</Label>
+            <Input
+              id="dateOfRecord"
+              type="date"
+              value={formData.dateOfRecord}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="medicalConditions">
+              Medical Conditions (comma-separated)
+            </Label>
             <textarea
               id="medicalConditions"
-              placeholder="e.g., Asthma, Diabetes, Heart Condition."
               value={formData.medicalConditions}
               onChange={handleChange}
-              rows={3}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              rows={2}
+              placeholder="Enter medical conditions here..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
             />
           </div>
+
           <div>
-            <Label htmlFor="allergies">Allergies</Label>
+            <Label htmlFor="allergies">Allergies (comma-separated)</Label>
             <textarea
               id="allergies"
-              placeholder="e.g., Penicillin, Peanuts, Bee Stings."
               value={formData.allergies}
               onChange={handleChange}
-              rows={3}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              rows={2}
+              placeholder="Enter allergies here..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
             />
           </div>
+
           <div>
             <Label htmlFor="immunizations">Immunizations</Label>
             <textarea
               id="immunizations"
-              placeholder="e.g., DTP, MMR, Polio (dates if available)."
               value={formData.immunizations}
               onChange={handleChange}
               rows={3}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Enter immunizations here..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
             />
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="doctorName">Doctor's Name</Label>
+              <Label htmlFor="doctorName">Doctor's Name (Optional)</Label>
               <Input
                 id="doctorName"
                 type="text"
-                placeholder="Dr. Emily White"
-                value={formData.doctorName}
+                value={formData.doctorName || ""}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <Label htmlFor="doctorPhone">Doctor's Phone</Label>
+              <Label htmlFor="doctorPhone">Doctor's Phone (Optional)</Label>
               <Input
                 id="doctorPhone"
                 type="tel"
-                placeholder="+1 (555) 333-4444"
-                value={formData.doctorPhone}
+                value={formData.doctorPhone || ""}
                 onChange={handleChange}
               />
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4 mt-8">
+          <div>
+            <Label htmlFor="notes">Additional Notes (Optional)</Label>
+            <textarea
+              id="notes"
+              value={formData.notes || ""}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Enter additional notes her..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+            />
+          </div>
+
+          {message && (
+            <div
+              className={`p-3 rounded-md text-sm ${
+                submissionStatus === "success"
+                  ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                  : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-4 mt-6">
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.history.back()}
+              onClick={onBack}
+              disabled={submissionStatus === "submitting"}
             >
-              Cancel
+              Go Back
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={submissionStatus === "submitting"}>
+              {submissionStatus === "submitting"
+                ? "Saving Changes..."
+                : "Save Changes"}
+            </Button>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};
+
+export default StudentHealthRecordEditPage;

@@ -5,9 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -72,12 +72,23 @@ const allMockDisciplinaryRecords: DisciplinaryRecordDetails[] = [
 ];
 
 export default function DisciplinaryRecordDetailsPage({ params }: PageProps) {
-  const { id: recordId } = params;
+  const [recordId, setRecordId] = useState<string | null>(null);
   const [record, setRecord] = useState<DisciplinaryRecordDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setRecordId(resolvedParams.id);
+    };
+
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!recordId) return;
+
     const fetchRecordData = async () => {
       setLoading(true);
       setError(null);
@@ -102,7 +113,7 @@ export default function DisciplinaryRecordDetailsPage({ params }: PageProps) {
     fetchRecordData();
   }, [recordId]);
 
-  if (loading) {
+  if (loading || recordId === null) {
     return (
       <div className="min-h-screen bg-gray-100 p-6 lg:p-8 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-xl text-center">

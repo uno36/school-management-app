@@ -1,30 +1,63 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import Link from "next/link";
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
+// --- Theme Context Mock (Embedded for self-contained execution) ---
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
 }
 
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    return {
+      theme: "light",
+      toggleTheme: () =>
+        console.warn("toggleTheme called outside ThemeProvider"),
+    };
+  }
+  return context;
+};
+// --- End Theme Context Mock ---
+
+// --- Mock Shadcn UI Component Mockups ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "secondary" | "ghost" | "link";
+  variant?:
+    | "default"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
+    | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const baseClasses =
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-all duration-200 ease-in-out";
     const variantClasses = {
-      default: "bg-blue-600 text-white hover:bg-blue-700",
+      default:
+        "bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
       outline:
-        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50",
-      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-      ghost: "hover:bg-gray-100 hover:text-gray-900",
-      link: "text-blue-600 underline-offset-4 hover:underline",
+        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm dark:border-blue-600 dark:text-blue-400 dark:hover:bg-gray-700",
+      secondary:
+        "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500",
+      ghost:
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100",
+      link: "text-blue-600 underline-offset-4 hover:underline dark:text-blue-400",
+      destructive:
+        "bg-red-600 text-white hover:bg-red-700 shadow-md dark:bg-red-700 dark:hover:bg-red-800",
     };
     const sizeClasses = {
       default: "h-10 px-4 py-2",
@@ -42,213 +75,232 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 Button.displayName = "Button";
+// --- End Mock Shadcn UI Component Mockups ---
 
-interface HealthRecordDetails {
+// Mock Link component for navigation (simple anchor tag)
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  href: string;
+  children: React.ReactNode;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void; // Allow custom onClick
+}
+
+
+
+// Define types for health record
+interface HealthRecord {
   id: string;
   studentId: string;
   studentName: string;
+  dateOfRecord: string; // YYYY-MM-DD
   medicalConditions: string;
   allergies: string;
   immunizations: string;
-  doctorName: string;
-  doctorPhone: string;
+  doctorName?: string;
+  doctorPhone?: string;
+  notes?: string;
 }
 
-const allMockHealthRecords: HealthRecordDetails[] = [
+// Mock data for health records (subset for details page)
+const mockHealthRecords: HealthRecord[] = [
   {
     id: "HR001",
-    studentId: "STU001",
-    studentName: "Alice Johnson",
-    medicalConditions: "None",
-    allergies: "Pollen (seasonal)",
-    immunizations: "MMR, DTP, Polio (all up to date)",
+    studentId: "S001",
+    studentName: "Alice Smith",
+    dateOfRecord: "2024-09-10",
+    medicalConditions: "Asthma (mild)",
+    allergies: "Pollen",
+    immunizations: "All standard childhood immunizations up-to-date.",
     doctorName: "Dr. Emily White",
-    doctorPhone: "+1-555-111-2222",
+    doctorPhone: "111-222-3333",
+    notes:
+      "Requires inhaler during allergy season. Parents informed about emergency plan.",
   },
-  // ... other mock records
+  {
+    id: "HR002",
+    studentId: "S002",
+    studentName: "Bob Johnson",
+    dateOfRecord: "2024-08-15",
+    medicalConditions: "None",
+    allergies: "Peanuts (severe)",
+    immunizations: "Up-to-date, including flu shot.",
+    doctorName: "Dr. Alex Green",
+    doctorPhone: "444-555-6666",
+    notes:
+      "EpiPen stored in nurse's office. All staff trained on anaphylaxis protocol and food cross-contamination prevention.",
+  },
+  {
+    id: "HR003",
+    studentId: "S003",
+    studentName: "Charlie Brown",
+    dateOfRecord: "2024-09-01",
+    medicalConditions: "Eczema",
+    allergies: "Dust mites",
+    immunizations:
+      "Missing MMR booster, parents notified and follow-up scheduled for next month.",
+    doctorName: "Dr. Sarah Lee",
+    doctorPhone: "777-888-9999",
+    notes:
+      "Skin flare-ups managed with prescribed topical cream. Avoid dusty areas and ensure proper ventilation in classroom.",
+  },
 ];
 
-export default function HealthRecordDetailsPage({ params }: PageProps) {
-  const { id: recordId } = params;
-  const [record, setRecord] = useState<HealthRecordDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface StudentHealthRecordDetailsPageProps {
+  recordId?: string; // Simulate ID coming from URL (e.g., 'HR001')
+  onEdit?: (id: string) => void; // Callback to navigate to edit page
+  onBack?: () => void; // Callback to navigate back
+}
 
-  useEffect(() => {
-    const fetchRecordData = async () => {
-      setLoading(true);
-      setError(null);
+const StudentHealthRecordDetailsPage: React.FC<
+  StudentHealthRecordDetailsPageProps
+> = ({
+  recordId = "HR001", // Default for demonstration
+  onEdit,
+  onBack,
+}) => {
+  const { theme } = useTheme();
 
-      try {
-        const foundRecord = allMockHealthRecords.find((r) => r.id === recordId);
-        if (foundRecord) {
-          setRecord(foundRecord);
-        } else {
-          setError(`Health record with ID "${recordId}" not found.`);
-        }
-      } catch (err) {
-        setError("Failed to load health record data.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // In a real app, you would fetch data based on recordId
+  const record = mockHealthRecords.find((rec) => rec.id === recordId);
 
-    fetchRecordData();
-  }, [recordId]);
-
-  if (loading) {
+  if (!record) {
     return (
-      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
-          <p className="text-xl text-gray-600">
-            Loading health record details...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !record) {
-    return (
-      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">
+      <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-xl text-center dark:bg-gray-800 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-400">
             Record Not Found
           </h2>
-          <p className="text-gray-700">
-            The health record for student ID &quot;{recordId}&quot; could not be
-            found.
+          <p className="text-gray-700 dark:text-gray-300">
+            The health record with ID "{recordId}" could not be found.
           </p>
-          <Button className="mt-6" onClick={() => window.history.back()}>
-            Go Back
-          </Button>
+          {onBack && (
+            <Button onClick={onBack} className="mt-6">
+              Go Back to Health Records List
+            </Button>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 lg:p-8">
-      <div className="container mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <div className="w-full max-w-5xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Health Record: {record.studentName}
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50">
+            Health Record Details: {record.id}
           </h1>
-          <a href={`/student/health-records/${record.id}/edit`}>
-            <Button variant="outline">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-              Edit Record
-            </Button>
-          </a>
+          <div className="flex space-x-3">
+            {/* Edit Button */}
+            {onEdit && ( // Conditionally render if onEdit prop is provided
+              <Link href={`/dashboard/student/studentHealthRecord/${record.id}/edit`}>
+                <Button variant="outline">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                  Edit Record
+                </Button>
+              </Link>
+            )}
+            {onBack && (
+              <Button variant="secondary" onClick={onBack}>
+                Go Back
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Student Profile Section */}
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <Image
-            width={150}
-            height={150}
-            src={`https://placehold.co/150x150/87CEEB/FFFFFF?text=${record.studentName
-              .split(" ")[0]
-              .charAt(0)}${record.studentName.split(" ")[1].charAt(0)}`}
-            alt={`${record.studentName}`}
-            className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
-            onError={(e) => {
-              e.currentTarget.src = `https://placehold.co/150x150/cccccc/333333?text=${record.studentName
-                .split(" ")[0]
-                .charAt(0)}${record.studentName.split(" ")[1].charAt(0)}`;
-            }}
-          />
-          <div className="text-center md:text-left">
-            <h2 className="text-2xl font-semibold text-gray-900">
+        {/* Health Record Information */}
+        <div className="space-y-6 p-6 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700 text-gray-800 dark:text-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <p>
+              <strong className="text-gray-700 dark:text-gray-300">
+                Student ID:
+              </strong>{" "}
+              {record.studentId}
+            </p>
+            <p>
+              <strong className="text-gray-700 dark:text-gray-300">
+                Student Name:
+              </strong>{" "}
               {record.studentName}
-            </h2>
-            <p className="text-lg text-gray-700">
-              Student ID:{" "}
-              <span className="font-medium">{record.studentId}</span>
             </p>
-            <p className="text-md text-gray-600">
-              Health Status:{" "}
-              <span className="font-medium">
-                {record.medicalConditions === "None"
-                  ? "Good"
-                  : "Special Conditions"}
-              </span>
+            <p>
+              <strong className="text-gray-700 dark:text-gray-300">
+                Date of Record:
+              </strong>{" "}
+              {record.dateOfRecord}
+            </p>
+          </div>
+
+          <div>
+            <strong className="text-gray-700 dark:text-gray-300 block mb-2">
+              Medical Conditions:
+            </strong>
+            <p className="p-3 bg-white rounded-md shadow-sm border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+              {record.medicalConditions || "None"}
+            </p>
+          </div>
+
+          <div>
+            <strong className="text-gray-700 dark:text-gray-300 block mb-2">
+              Allergies:
+            </strong>
+            <p className="p-3 bg-white rounded-md shadow-sm border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+              {record.allergies || "None"}
+            </p>
+          </div>
+
+          <div>
+            <strong className="text-gray-700 dark:text-gray-300 block mb-2">
+              Immunizations:
+            </strong>
+            <p className="p-3 bg-white rounded-md shadow-sm border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+              {record.immunizations || "N/A"}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <p>
+              <strong className="text-gray-700 dark:text-gray-300">
+                Doctor's Name:
+              </strong>{" "}
+              {record.doctorName || "N/A"}
+            </p>
+            <p>
+              <strong className="text-gray-700 dark:text-gray-300">
+                Doctor's Phone:
+              </strong>{" "}
+              {record.doctorPhone || "N/A"}
+            </p>
+          </div>
+
+          <div>
+            <strong className="text-gray-700 dark:text-gray-300 block mb-2">
+              Additional Notes:
+            </strong>
+            <p className="p-3 bg-white rounded-md shadow-sm border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+              {record.notes || "No additional notes."}
             </p>
           </div>
         </div>
 
-        {/* Medical Information Sections */}
-        <div className="space-y-6 mb-8 p-6 bg-white rounded-lg shadow-md border border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
-            Medical Conditions
-          </h3>
-          <p className="text-gray-800 leading-relaxed">
-            {record.medicalConditions || "None"}
-          </p>
-        </div>
-
-        <div className="space-y-6 mb-8 p-6 bg-white rounded-lg shadow-md border border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
-            Allergies
-          </h3>
-          <p className="text-gray-800 leading-relaxed">
-            {record.allergies || "None"}
-          </p>
-        </div>
-
-        <div className="space-y-6 mb-8 p-6 bg-white rounded-lg shadow-md border border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
-            Immunizations
-          </h3>
-          <p className="text-gray-800 leading-relaxed">
-            {record.immunizations || "N/A"}
-          </p>
-        </div>
-
-        <div className="space-y-6 p-6 bg-white rounded-lg shadow-md border border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
-            Physician Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-600">Doctor's Name:</p>
-              <p className="text-gray-800 font-medium">
-                {record.doctorName || "N/A"}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-600">Contact Number:</p>
-              <p className="text-gray-800 font-medium">
-                {record.doctorPhone || "N/A"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Button onClick={() => window.history.back()} variant="outline">
-            Go Back
-          </Button>
-        </div>
-
-        <p className="text-xs text-gray-500 mt-6 text-center">
-          This page displays detailed health information for a specific student.
+        <p className="text-sm text-gray-500 mt-6 text-center dark:text-gray-400">
+          This page displays detailed health information for a student.
         </p>
       </div>
     </div>
   );
-}
+};
+
+export default StudentHealthRecordDetailsPage;

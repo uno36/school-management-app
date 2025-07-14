@@ -1,11 +1,37 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
+
+// --- Theme Context Mock (Embedded for self-contained execution) ---
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    return {
+      theme: "light",
+      toggleTheme: () =>
+        console.warn("toggleTheme called outside ThemeProvider"),
+    };
+  }
+  return context;
+};
+// --- End Theme Context Mock ---
 
 // --- Mock Shadcn UI Component Mockups ---
-// Duplicated for self-contained execution. In a real project, import these.
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   type?: string;
 }
@@ -15,7 +41,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         type={type}
-        className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out ${className}`}
+        className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400`}
         ref={ref}
         {...props}
       />
@@ -38,15 +64,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const baseClasses =
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-all duration-200 ease-in-out";
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
     const variantClasses = {
-      default: "bg-blue-600 text-white shadow-md hover:bg-blue-700",
+      default:
+        "bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
       outline:
-        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm",
-      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm",
-      ghost: "hover:bg-gray-100 hover:text-gray-900",
-      link: "text-blue-600 underline-offset-4 hover:underline",
-      destructive: "bg-red-600 text-white hover:bg-red-700 shadow-md",
+        "border border-blue-400 bg-transparent text-blue-600 hover:bg-blue-50 hover:text-blue-700 shadow-sm dark:border-blue-600 dark:text-blue-400 dark:hover:bg-gray-700",
+      secondary:
+        "bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500",
+      ghost:
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100",
+      link: "text-blue-600 underline-offset-4 hover:underline dark:text-blue-400",
+      destructive:
+        "bg-red-600 text-white hover:bg-red-700 shadow-md dark:bg-red-700 dark:hover:bg-red-800",
     };
     const sizeClasses = {
       default: "h-10 px-4 py-2",
@@ -74,13 +104,13 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="relative">
         <select
-          className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 ease-in-out ${className}`}
+          className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100`}
           ref={ref}
           {...props}
         >
           {children}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -101,233 +131,292 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 Select.displayName = "Select";
 // --- End Mock Shadcn UI Component Mockups ---
 
-// Define interface for Student data (simplified for list display)
-interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
-  class: string;
-  admissionNumber: string;
+// Mock Link component for navigation (simple anchor tag)
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  href: string;
+  children: React.ReactNode;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void; // Allow custom onClick
 }
 
-// Mock data for a list of students
-const mockStudents: Student[] = [
+// Define types for academic history record
+interface AcademicHistoryRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  academicYear: string;
+  gradesAndAchievements: string;
+  pastAcademicPerformance: string;
+  previousSchoolsAttended?: string;
+}
+
+// Mock data for academic history records
+const initialMockAcademicHistoryRecords: AcademicHistoryRecord[] = [
   {
-    id: "S001",
-    firstName: "Alice",
-    lastName: "Smith",
-    class: "7th Grade A",
-    admissionNumber: "ADM-2024-001",
+    id: "AH001",
+    studentId: "S001",
+    studentName: "Alice Smith",
+    academicYear: "2023-2024",
+    gradesAndAchievements:
+      "Achieved A in Math, B in Science. Participated in Debate Club.",
+    pastAcademicPerformance:
+      "Strong performance in elementary school, consistently above average.",
+    previousSchoolsAttended: "Elementary School ABC",
   },
   {
-    id: "S002",
-    firstName: "Bob",
-    lastName: "Johnson",
-    class: "8th Grade B",
-    admissionNumber: "ADM-2024-002",
+    id: "AH002",
+    studentId: "S002",
+    studentName: "Bob Johnson",
+    academicYear: "2023-2024",
+    gradesAndAchievements:
+      "Improved grades in English, C in History. Joined Chess Club.",
+    pastAcademicPerformance:
+      "Struggled with reading in early grades, showed significant improvement in middle school.",
+    previousSchoolsAttended: "Primary School XYZ",
   },
   {
-    id: "S003",
-    firstName: "Charlie",
-    lastName: "Brown",
-    class: "7th Grade A",
-    admissionNumber: "ADM-2024-003",
+    id: "AH003",
+    studentId: "S003",
+    studentName: "Charlie Brown",
+    academicYear: "2022-2023",
+    gradesAndAchievements:
+      "Excellent in Arts, participated in school play. Maintained B average.",
+    pastAcademicPerformance:
+      "Consistent academic record, strong in creative subjects.",
+    previousSchoolsAttended: "Local Community School",
   },
   {
-    id: "S004",
-    firstName: "Diana",
-    lastName: "Prince",
-    class: "9th Grade C",
-    admissionNumber: "ADM-2024-004",
+    id: "AH004",
+    studentId: "S001",
+    studentName: "Alice Smith",
+    academicYear: "2022-2023",
+    gradesAndAchievements:
+      'Achieved A in all core subjects. Awarded "Student of the Year".',
+    pastAcademicPerformance: "Outstanding performance, top of her class.",
+    previousSchoolsAttended: "Elementary School ABC",
   },
   {
-    id: "S005",
-    firstName: "Eve",
-    lastName: "Adams",
-    class: "8th Grade B",
-    admissionNumber: "ADM-2024-005",
+    id: "AH005",
+    studentId: "S004",
+    studentName: "Diana Prince",
+    academicYear: "2023-2024",
+    gradesAndAchievements:
+      "Consistent A- grades. Captain of the Basketball team.",
+    pastAcademicPerformance:
+      "Well-rounded student, strong in both academics and sports.",
+    previousSchoolsAttended: "Another High School",
+  },
+  {
+    id: "AH006",
+    studentId: "S005",
+    studentName: "Eve Adams",
+    academicYear: "2023-2024",
+    gradesAndAchievements:
+      "Good progress in Math, needs improvement in Science.",
+    pastAcademicPerformance:
+      "Average performance, but shows potential with extra support.",
+    previousSchoolsAttended: "Local Middle School",
   },
 ];
 
-const StudentListPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterClass, setFilterClass] = useState("All");
+const StudentAcademicHistoryListPage: React.FC = () => {
+  const { theme } = useTheme();
   const router = useRouter();
 
-  // Filtered students based on search term and class
-  const filteredStudents = mockStudents.filter((student) => {
+  const [records, setRecords] = useState<AcademicHistoryRecord[]>(
+    initialMockAcademicHistoryRecords
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterYear, setFilterYear] = useState("All");
+
+  const academicYears = Array.from(
+    new Set(initialMockAcademicHistoryRecords.map((rec) => rec.academicYear))
+  )
+    .sort()
+    .reverse();
+
+  const filteredRecords = records.filter((record) => {
     const matchesSearch =
       searchTerm === "" ||
-      student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesClass = filterClass === "All" || student.class === filterClass;
-
-    return matchesSearch && matchesClass;
+      record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.gradesAndAchievements
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      record.pastAcademicPerformance
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    const matchesYear =
+      filterYear === "All" || record.academicYear === filterYear;
+    return matchesSearch && matchesYear;
   });
 
-  // Extract unique classes for filter dropdown
-  const uniqueClasses = Array.from(
-    new Set(mockStudents.map((student) => student.class))
-  );
-
-  // Simulate navigation (in a real app, you'd use a router like Next.js's useRouter)
-  const handleViewAcademicHistory = (studentId: string) => {
-    router.push(`/dashboard/student/studentAcademicHistory/${studentId}`);
-    // Example of actual navigation if using Next.js App Router:
-    // router.push(`/dashboard/student/academic-history/${studentId}`);
+  const handleViewDetails = (id: string) => {
+    router.push(`/dashboard/academic/studentAcademicHistory/${id}`);
   };
 
-  const handleEditAcademicHistory = (studentId: string) => {
-    router.push(`/dashboard/student/studentAcademicHistory/${studentId}/edit`);
-    // Example of actual navigation if using Next.js App Router:
-    // router.push(`/dashboard/student/academic-history/${studentId}/edit`);
+  const handleDeleteRecord = (id: string) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete academic history record with ID: ${id}?`
+      )
+    ) {
+      setRecords((prevRecords) =>
+        prevRecords.filter((record) => record.id !== id)
+      );
+      alert(`Academic history record ${id} deleted successfully!`);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Student List</h1>
+    <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 dark:text-gray-50">
+        Student Academic History
+      </h1>
 
       {/* Filters and Actions */}
-      <section className="bg-white p-6 rounded-lg shadow-md mb-8">
+      <section className="bg-white p-6 rounded-lg shadow-md mb-8 dark:bg-gray-800 dark:border-gray-700">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
             <label
-              htmlFor="search-term"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="filter-year"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
             >
-              Search Students
+              Filter by Academic Year
+            </label>
+            <Select
+              id="filter-year"
+              value={filterYear}
+              onChange={(e) => setFilterYear(e.target.value)}
+              className="w-full"
+            >
+              <option value="All">All Years</option>
+              {academicYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="md:col-span-2">
+            <label
+              htmlFor="search-term"
+              className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300"
+            >
+              Search
             </label>
             <Input
               id="search-term"
               type="text"
-              placeholder="Search by name, ID, or admission no."
+              placeholder="Search by student name, ID, or achievements"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
             />
           </div>
-          <div>
-            <label
-              htmlFor="filter-class"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Filter by Class
-            </label>
-            <Select
-              id="filter-class"
-              value={filterClass}
-              onChange={(e) => setFilterClass(e.target.value)}
-              className="w-full"
-            >
-              <option value="All">All Classes</option>
-              {uniqueClasses.map((className, index) => (
-                <option key={index} value={className}>
-                  {className}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div className="flex items-end">
-            <Button variant="default" className="w-full">
-              Apply Filters
-            </Button>
-          </div>
         </div>
         <div className="flex justify-end">
           <Link href="/dashboard/student/studentAcademicHistory/add">
-            <Button variant="outline" className="cursor-pointer">
-              Generate History
+            <Button variant="default" className="cursor-pointer">
+              Add New Record
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* Student List Table */}
-      <section className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">
-          All Students ({filteredStudents.length})
+      {/* Academic History List Table */}
+      <section className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4 dark:text-gray-50">
+          Academic Records ({filteredRecords.length})
         </h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
+          <table className="min-w-full bg-white rounded-lg overflow-hidden dark:bg-gray-800">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Record ID
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Student ID
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                  Admission No.
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Student Name
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                  Name
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Academic Year
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                  Class
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                  Grades & Achievements
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
+              {filteredRecords.length > 0 ? (
+                filteredRecords.map((record) => (
                   <tr
-                    key={student.id}
-                    className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50"
+                    key={record.id}
+                    className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                   >
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {student.id}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.id}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {student.admissionNumber}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.studentId}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {student.firstName} {student.lastName}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.studentName}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-800">
-                      {student.class}
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">
+                      {record.academicYear}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200 truncate max-w-xs">
+                      {record.gradesAndAchievements}
                     </td>
                     <td className="py-3 px-4 text-sm flex space-x-2">
+                      <Link
+                        href={`/dashboard/student/studentAcademicHistory/${record.id}`}
+                      >
+                        <Button
+                          variant="outline"
+                          className="cursor-pointer"
+                          size="sm"
+                          onClick={() => handleViewDetails(record.id)}
+                        >
+                          View
+                        </Button>
+                      </Link>
                       <Button
-                        variant="outline"
+                        variant="destructive"
                         className="cursor-pointer"
                         size="sm"
-                        onClick={() => handleViewAcademicHistory(student.id)}
+                        onClick={() => handleDeleteRecord(record.id)}
                       >
-                        View Academic History
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="cursor-pointer"
-                        size="sm"
-                        onClick={() => handleEditAcademicHistory(student.id)}
-                      >
-                        Edit Academic History
+                        Delete
                       </Button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-gray-500">
-                    No students found matching your criteria.
+                  <td
+                    colSpan={6}
+                    className="py-6 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No academic history records found matching your criteria.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-500 mt-4">
-          This table lists all registered students. &quot;View Academic
-          History&quot; and &quot;Edit Academic History&quot; buttons simulate
-          navigation to their respective dedicated pages.
+        <p className="text-xs text-gray-500 mt-4 dark:text-gray-400">
+          This table lists student academic history records.
         </p>
       </section>
     </div>
   );
 };
 
-export default StudentListPage;
+export default StudentAcademicHistoryListPage;

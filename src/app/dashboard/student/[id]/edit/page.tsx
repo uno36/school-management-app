@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-// frontend/app/(dashboard)/student/[id]/edit/page.tsx
 import React, { useState, useEffect } from "react";
 
 // --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
@@ -234,26 +233,34 @@ interface StudentProfileData {
   }[];
 }
 
+interface StudentEditPageProps {
+  params: Promise<{ id: string }>;
+}
+
 /**
  * StudentEditPage component allows editing of a comprehensive student profile.
  * It fetches existing data, pre-populates the form, and handles updates.
  */
-export default function StudentEditPage() {
+export default function StudentEditPage({ params }: StudentEditPageProps) {
+  const [id, setId] = useState<string | null>(null);
   const [student, setStudent] = useState<StudentProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock student ID for demonstration. In a real app, you'd get this from Next.js router.
-  const studentId = "1"; // Example: Hardcoding for now, imagine this comes from useRouter().query.id
-
   useEffect(() => {
-    const fetchStudentData = async () => {
-      setLoading(true);
-      setError(null);
+    const getParamsAndFetchData = async () => {
       try {
+        // Resolve the params promise
+        const resolvedParams = await params;
+        setId(resolvedParams.id);
+
+        // Now fetch the student data using the resolved ID
+        setLoading(true);
+        setError(null);
+
         // Simulate fetching data from a backend API
         const mockData: StudentProfileData = {
-          id: "1",
+          id: resolvedParams.id,
           admissionNumber: "ADM001",
           firstName: "Alice",
           lastName: "Smith",
@@ -320,8 +327,8 @@ export default function StudentEditPage() {
       }
     };
 
-    fetchStudentData();
-  }, [studentId]);
+    getParamsAndFetchData();
+  }, [params]);
 
   const handleChange = (
     e: React.ChangeEvent<
