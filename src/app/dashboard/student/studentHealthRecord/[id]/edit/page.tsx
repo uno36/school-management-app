@@ -106,123 +106,91 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
 );
 Label.displayName = "Label";
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  children: React.ReactNode;
-}
-
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <div className="relative">
-        <select
-          className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 ease-in-out ${className} dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100`}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4 opacity-50"
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </div>
-      </div>
-    );
-  }
-);
-Select.displayName = "Select";
 // --- End Mock Shadcn UI Component Mockups ---
 
-// Define type for academic history record
-interface AcademicHistoryRecord {
+// Define types for health record
+interface HealthRecord {
   id: string;
   studentId: string;
   studentName: string;
-  academicYear: string;
-  gradesAndAchievements: string;
-  pastAcademicPerformance: string;
-  previousSchoolsAttended?: string;
+  dateOfRecord: string; // YYYY-MM-DD
+  medicalConditions: string;
+  allergies: string;
+  immunizations: string;
+  doctorName?: string;
+  doctorPhone?: string;
+  notes?: string;
 }
 
-// Mock data for academic history records (subset for edit page)
-const mockAcademicHistoryRecords: AcademicHistoryRecord[] = [
+// Mock data for health records (subset for edit page)
+const mockHealthRecords: HealthRecord[] = [
   {
-    id: "AH001",
+    id: "HR001",
     studentId: "S001",
     studentName: "Alice Smith",
-    academicYear: "2023-2024",
-    gradesAndAchievements:
-      'Achieved A in Math, B in Science. Participated in Debate Club. Awarded "Most Improved Speaker".',
-    pastAcademicPerformance:
-      "Strong performance in elementary school, consistently above average. Showed early aptitude for logical reasoning.",
-    previousSchoolsAttended: "Elementary School ABC (2018-2022)",
+    dateOfRecord: "2024-09-10",
+    medicalConditions: "Asthma (mild)",
+    allergies: "Pollen",
+    immunizations: "All standard childhood immunizations up-to-date.",
+    doctorName: "Dr. Emily White",
+    doctorPhone: "111-222-3333",
+    notes:
+      "Requires inhaler during allergy season. Parents informed about emergency plan.",
   },
   {
-    id: "AH002",
+    id: "HR002",
     studentId: "S002",
     studentName: "Bob Johnson",
-    academicYear: "2023-2024",
-    gradesAndAchievements:
-      "Improved grades in English, C in History. Joined Chess Club. Won regional chess tournament.",
-    pastAcademicPerformance:
-      "Struggled with reading in early grades, showed significant improvement in middle school. Highly analytical.",
-    previousSchoolsAttended: "Primary School XYZ (2017-2022)",
+    dateOfRecord: "2024-08-15",
+    medicalConditions: "None",
+    allergies: "Peanuts (severe)",
+    immunizations: "Up-to-date, including flu shot.",
+    doctorName: "Dr. Alex Green",
+    doctorPhone: "444-555-6666",
+    notes:
+      "EpiPen stored in nurse's office. All staff trained on anaphylaxis protocol and food cross-contamination prevention.",
   },
   {
-    id: "AH003",
+    id: "HR003",
     studentId: "S003",
     studentName: "Charlie Brown",
-    academicYear: "2022-2023",
-    gradesAndAchievements:
-      'Excellent in Arts, participated in school play as lead. Maintained B average. Received "Best Artistic Contribution" award.',
-    pastAcademicPerformance:
-      "Consistent academic record, strong in creative subjects. Very imaginative and expressive.",
-    previousSchoolsAttended: "Local Community School (2016-2022)",
+    dateOfRecord: "2024-09-01",
+    medicalConditions: "Eczema",
+    allergies: "Dust mites",
+    immunizations:
+      "Missing MMR booster, parents notified and follow-up scheduled for next month.",
+    doctorName: "Dr. Sarah Lee",
+    doctorPhone: "777-888-9999",
+    notes:
+      "Skin flare-ups managed with prescribed topical cream. Avoid dusty areas and ensure proper ventilation in classroom.",
   },
 ];
 
-// Mock function to simulate updating an academic history record
-const updateAcademicHistoryRecord = (
-  record: AcademicHistoryRecord
-): Promise<boolean> => {
+// Mock function to simulate updating a health record
+const updateHealthRecord = (record: HealthRecord): Promise<boolean> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      console.log("Simulating updating academic history record:", record);
+      console.log("Simulating updating health record:", record);
       // In a real app, this would be an API call to your backend
       resolve(true); // Simulate successful update
     }, 1000); // Simulate network delay
   });
 };
 
-interface StudentAcademicHistoryEditPageProps {
-  recordId?: string; // Simulate ID coming from URL (e.g., 'AH001')
+interface StudentHealthRecordEditPageProps {
+  recordId?: string; // Simulate ID coming from URL (e.g., 'HR001')
   onBack?: () => void; // Callback to navigate back
 }
 
-const StudentAcademicHistoryEditPage: React.FC<
-  StudentAcademicHistoryEditPageProps
+const StudentHealthRecordEditPage: React.FC<
+  StudentHealthRecordEditPageProps
 > = ({
-  recordId = "AH001", // Default for demonstration
+  recordId = "HR001", // Default for demonstration
   onBack,
 }) => {
   const { theme } = useTheme();
 
-  const currentYear = new Date().getFullYear();
-  const academicYears = Array.from(
-    { length: 5 },
-    (_, i) => `${currentYear + i}-${currentYear + i + 1}`
-  ).reverse();
-
-  const [formData, setFormData] = useState<AcademicHistoryRecord | null>(null);
+  const [formData, setFormData] = useState<HealthRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [submissionStatus, setSubmissionStatus] = useState<
     "idle" | "submitting" | "success" | "error"
@@ -236,22 +204,18 @@ const StudentAcademicHistoryEditPage: React.FC<
       setMessage(null);
       try {
         await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API delay
-        const foundRecord = mockAcademicHistoryRecords.find(
-          (rec) => rec.id === id
-        );
+        const foundRecord = mockHealthRecords.find((rec) => rec.id === id);
 
         if (foundRecord) {
           setFormData(JSON.parse(JSON.stringify(foundRecord))); // Deep copy
         } else {
-          setMessage(
-            `Academic history record with ID "${id}" not found for editing.`
-          );
+          setMessage(`Health record with ID "${id}" not found for editing.`);
         }
       } catch (error) {
         setMessage(
-          "Failed to load academic history data for editing. Please try again."
+          "Failed to load health record data for editing. Please try again."
         );
-        console.error("Error fetching academic history record:", error);
+        console.error("Error fetching health record:", error);
       } finally {
         setLoading(false);
       }
@@ -266,9 +230,7 @@ const StudentAcademicHistoryEditPage: React.FC<
   }, [recordId]);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
     setFormData((prev) =>
@@ -296,34 +258,33 @@ const StudentAcademicHistoryEditPage: React.FC<
     if (
       !formData.studentId ||
       !formData.studentName ||
-      !formData.academicYear ||
-      !formData.gradesAndAchievements ||
-      !formData.pastAcademicPerformance
+      !formData.dateOfRecord ||
+      !formData.medicalConditions ||
+      !formData.allergies ||
+      !formData.immunizations
     ) {
-      setMessage("Please fill in all required fields.");
+      setMessage(
+        "Please fill in all required fields (Student ID, Name, Date, Medical Conditions, Allergies, Immunizations)."
+      );
       setSubmissionStatus("error");
       return;
     }
 
     try {
-      const success = await updateAcademicHistoryRecord(formData);
+      const success = await updateHealthRecord(formData);
       if (success) {
         setSubmissionStatus("success");
-        setMessage(
-          `Academic history record ${formData.id} updated successfully!`
-        );
+        setMessage(`Health record ${formData.id} updated successfully!`);
       } else {
         setSubmissionStatus("error");
-        setMessage(
-          "Failed to update academic history record. Please try again."
-        );
+        setMessage("Failed to update health record. Please try again.");
       }
     } catch (error) {
       setSubmissionStatus("error");
       setMessage(
         "An error occurred while updating the record. Please try again."
       );
-      console.error("Error updating academic history record:", error);
+      console.error("Error updating health record:", error);
     }
   };
 
@@ -331,7 +292,7 @@ const StudentAcademicHistoryEditPage: React.FC<
     return (
       <div className="min-h-screen bg-gray-100 p-6 lg:p-8 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 flex items-center justify-center">
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          Loading academic history record...
+          Loading health record...
         </p>
       </div>
     );
@@ -345,11 +306,11 @@ const StudentAcademicHistoryEditPage: React.FC<
             Record Not Found
           </h2>
           <p className="text-gray-700 dark:text-gray-300">
-            {message || "The academic history record could not be found."}
+            {message || "The health record could not be found."}
           </p>
           {onBack && (
             <Button onClick={onBack} className="mt-6">
-              Go Back to Academic History List
+              Go Back to Health Records List
             </Button>
           )}
         </div>
@@ -361,7 +322,7 @@ const StudentAcademicHistoryEditPage: React.FC<
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen">
       <div className="w-full max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50 mb-8 text-center">
-          Edit Academic History Record: {formData.id}
+          Edit Health Record: {formData.id}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -390,68 +351,86 @@ const StudentAcademicHistoryEditPage: React.FC<
           </div>
 
           <div>
-            <Label htmlFor="academicYear">Academic Year</Label>
-            <Select
-              id="academicYear"
-              value={formData.academicYear}
+            <Label htmlFor="dateOfRecord">Date of Record</Label>
+            <Input
+              id="dateOfRecord"
+              type="date"
+              value={formData.dateOfRecord}
               onChange={handleChange}
-              required
-            >
-              {academicYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="gradesAndAchievements">
-              Grades and Achievements
-            </Label>
-            <label
-              htmlFor="gradesAndAchievements"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Grades and Achievements
-            </label>
-            <textarea
-              id="gradesAndAchievements"
-              value={formData.gradesAndAchievements}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Enter your grades and achievements here..."
-              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
-              required
-              title="Please provide your grades and achievements"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="pastAcademicPerformance">
-              Past Academic Performance Summary
-            </Label>
-            <textarea
-              id="pastAcademicPerformance"
-              value={formData.pastAcademicPerformance}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Enter past academic perfomnce here..."
-              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="previousSchoolsAttended">
-              Previous Schools Attended (Optional)
+            <Label htmlFor="medicalConditions">
+              Medical Conditions (comma-separated)
             </Label>
             <textarea
-              id="previousSchoolsAttended"
-              value={formData.previousSchoolsAttended || ""}
+              id="medicalConditions"
+              value={formData.medicalConditions}
               onChange={handleChange}
               rows={2}
-              placeholder="Enter previous school attended here..."
+              placeholder="Enter medical conditions here..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="allergies">Allergies (comma-separated)</Label>
+            <textarea
+              id="allergies"
+              value={formData.allergies}
+              onChange={handleChange}
+              rows={2}
+              placeholder="Enter allergies here..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="immunizations">Immunizations</Label>
+            <textarea
+              id="immunizations"
+              value={formData.immunizations}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Enter immunizations here..."
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="doctorName">Doctor's Name (Optional)</Label>
+              <Input
+                id="doctorName"
+                type="text"
+                value={formData.doctorName || ""}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="doctorPhone">Doctor's Phone (Optional)</Label>
+              <Input
+                id="doctorPhone"
+                type="tel"
+                value={formData.doctorPhone || ""}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="notes">Additional Notes (Optional)</Label>
+            <textarea
+              id="notes"
+              value={formData.notes || ""}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Enter additional notes her..."
               className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
             />
           </div>
@@ -489,4 +468,4 @@ const StudentAcademicHistoryEditPage: React.FC<
   );
 };
 
-export default StudentAcademicHistoryEditPage;
+export default StudentHealthRecordEditPage;

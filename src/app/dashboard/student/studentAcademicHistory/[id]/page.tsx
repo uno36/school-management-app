@@ -116,7 +116,7 @@ const StudentAcademicHistoryDetailsPage: React.FC<
           </h1>
           {onEdit && (
             <a
-              href={`/dashboard/student/academic-history/${academicHistory.studentId}/edit`}
+              href={`/dashboard/student/studentAcademicHistory/${academicHistory.studentId}/edit`}
               onClick={(e) => {
                 e.preventDefault(); // Prevent default link behavior
                 onEdit(academicHistory.studentId); // Use the provided callback

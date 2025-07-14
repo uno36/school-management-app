@@ -9,7 +9,6 @@ import React, {
 } from "react";
 
 // --- Theme Context Mock (Embedded for self-contained execution) ---
-// In a real application, this would be imported from a central file like '../../context/ThemeContext'
 interface ThemeContextType {
   theme: "light" | "dark";
   toggleTheme: () => void;
@@ -20,7 +19,6 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    // Fallback for when ThemeProvider is not in the tree (e.g., component rendered in isolation)
     return {
       theme: "light",
       toggleTheme: () =>
@@ -144,47 +142,51 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 Select.displayName = "Select";
 // --- End Mock Shadcn UI Component Mockups ---
 
-// Define type for a new attendance record (without ID, as it's generated)
-interface NewAttendanceRecord {
-  name: string;
-  type: "student" | "staff";
-  status: "Present" | "Absent" | "Late";
-  date: string; // YYYY-MM-DD
-  time?: string;
-  reason?: string;
+// Define type for a new health record
+interface NewHealthRecord {
+  studentId: string;
+  studentName: string;
+  dateOfRecord: string;
+  medicalConditions: string;
+  allergies: string;
+  immunizations: string;
+  doctorName: string;
+  doctorPhone: string;
+  notes: string;
 }
 
-// Mock function to simulate adding an attendance record
-const addAttendanceRecord = (record: NewAttendanceRecord): Promise<string> => {
+// Mock function to simulate adding a health record
+const addHealthRecord = (record: NewHealthRecord): Promise<string> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const newId = `${record.type === "student" ? "S" : "T"}${Math.floor(
-        Math.random() * 1000
-      )
+      const newId = `HR${Math.floor(Math.random() * 1000)
         .toString()
         .padStart(3, "0")}`;
-      console.log("Simulating adding new record:", { id: newId, ...record });
+      console.log("Simulating adding new health record:", {
+        id: newId,
+        ...record,
+      });
       // In a real app, this would be an API call to your backend
       resolve(newId);
     }, 1000); // Simulate network delay
   });
 };
 
-const AttendanceAddPage: React.FC = () => {
-  const { theme } = useTheme(); // Consume theme context
+const StudentHealthRecordAddPage: React.FC = () => {
+  const { theme } = useTheme();
 
-  const today = new Date();
-  const todayDateString = `${today.getFullYear()}-${String(
-    today.getMonth() + 1
-  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayDateString = new Date().toISOString().split("T")[0];
 
-  const [formData, setFormData] = useState<NewAttendanceRecord>({
-    name: "",
-    type: "student",
-    status: "Present",
-    date: todayDateString,
-    time: "",
-    reason: "",
+  const [formData, setFormData] = useState<NewHealthRecord>({
+    studentId: "",
+    studentName: "",
+    dateOfRecord: todayDateString,
+    medicalConditions: "",
+    allergies: "",
+    immunizations: "",
+    doctorName: "",
+    doctorPhone: "",
+    notes: "",
   });
   const [submissionStatus, setSubmissionStatus] = useState<
     "idle" | "submitting" | "success" | "error"
@@ -209,45 +211,49 @@ const AttendanceAddPage: React.FC = () => {
     setMessage(null);
 
     // Basic validation
-    if (!formData.name || !formData.date) {
-      setMessage("Please fill in Name and Date.");
-      setSubmissionStatus("error");
-      return;
-    }
     if (
-      (formData.status === "Late" || formData.status === "Absent") &&
-      !formData.reason
+      !formData.studentId ||
+      !formData.studentName ||
+      !formData.dateOfRecord ||
+      !formData.medicalConditions ||
+      !formData.allergies ||
+      !formData.immunizations
     ) {
-      setMessage("Reason is required for Absent or Late status.");
+      setMessage(
+        "Please fill in all required fields (Student ID, Name, Date, Medical Conditions, Allergies, Immunizations)."
+      );
       setSubmissionStatus("error");
       return;
     }
 
     try {
-      const newRecordId = await addAttendanceRecord(formData);
+      const newRecordId = await addHealthRecord(formData);
       setSubmissionStatus("success");
       setMessage(
-        `Attendance record for "${formData.name}" added successfully with ID: ${newRecordId}`
+        `Health record for "${formData.studentName}" added successfully with ID: ${newRecordId}`
       );
       // Optionally clear form or redirect after success
       setFormData({
-        name: "",
-        type: "student",
-        status: "Present",
-        date: todayDateString,
-        time: "",
-        reason: "",
+        studentId: "",
+        studentName: "",
+        dateOfRecord: todayDateString,
+        medicalConditions: "",
+        allergies: "",
+        immunizations: "",
+        doctorName: "",
+        doctorPhone: "",
+        notes: "",
       });
     } catch (error) {
       setSubmissionStatus("error");
-      setMessage("Failed to add attendance record. Please try again.");
-      console.error("Error adding attendance record:", error);
+      setMessage("Failed to add health record. Please try again.");
+      console.error("Error adding health record:", error);
     }
   };
 
   // Simulate navigation back to list page (in a real app, use router.back() or router.push())
   const handleGoBack = () => {
-    alert("Simulating navigation back to Attendance List.");
+    alert("Simulating navigation back to Health Records List.");
     // Example for Next.js: useRouter().back();
   };
 
@@ -255,77 +261,116 @@ const AttendanceAddPage: React.FC = () => {
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen">
       <div className="w-full max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50 mb-8 text-center">
-          Add New Attendance Record
+          Add New Student Health Record
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="studentId">Student ID</Label>
+              <Input
+                id="studentId"
+                type="text"
+                placeholder="e.g., S001"
+                value={formData.studentId}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="studentName">Student Name</Label>
+              <Input
+                id="studentName"
+                type="text"
+                placeholder="e.g., Alice Smith"
+                value={formData.studentName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="dateOfRecord">Date of Record</Label>
             <Input
-              id="name"
-              type="text"
-              placeholder="e.g., John Doe"
-              value={formData.name}
+              id="dateOfRecord"
+              type="date"
+              value={formData.dateOfRecord}
               onChange={handleChange}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="type">Type</Label>
-            <Select
-              id="type"
-              value={formData.type}
+            <Label htmlFor="medicalConditions">
+              Medical Conditions (comma-separated)
+            </Label>
+            <textarea
+              id="medicalConditions"
+              placeholder="e.g., Asthma (mild), Eczema"
+              value={formData.medicalConditions}
               onChange={handleChange}
+              rows={2}
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
               required
-            >
-              <option value="student">Student</option>
-              <option value="staff">Staff</option>
-            </Select>
+            />
           </div>
 
           <div>
-            <Label htmlFor="status">Status</Label>
-            <Select
-              id="status"
-              value={formData.status}
+            <Label htmlFor="allergies">Allergies (comma-separated)</Label>
+            <textarea
+              id="allergies"
+              placeholder="e.g., Peanuts (severe), Pollen"
+              value={formData.allergies}
               onChange={handleChange}
+              rows={2}
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
               required
-            >
-              <option value="Present">Present</option>
-              <option value="Absent">Absent</option>
-              <option value="Late">Late</option>
-            </Select>
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="immunizations">Immunizations</Label>
+            <textarea
+              id="immunizations"
+              placeholder="e.g., All standard childhood immunizations up-to-date."
+              value={formData.immunizations}
+              onChange={handleChange}
+              rows={3}
+              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="doctorName">Doctor's Name (Optional)</Label>
               <Input
-                id="date"
-                type="date"
-                value={formData.date}
+                id="doctorName"
+                type="text"
+                placeholder="e.g., Dr. Jane Doe"
+                value={formData.doctorName}
                 onChange={handleChange}
-                required
               />
             </div>
             <div>
-              <Label htmlFor="time">Time (Optional)</Label>
+              <Label htmlFor="doctorPhone">Doctor's Phone (Optional)</Label>
               <Input
-                id="time"
-                type="time"
-                value={formData.time}
+                id="doctorPhone"
+                type="tel"
+                placeholder="e.g., 123-456-7890"
+                value={formData.doctorPhone}
                 onChange={handleChange}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="reason">Reason (Required for Absent/Late)</Label>
+            <Label htmlFor="notes">Additional Notes (Optional)</Label>
             <textarea
-              id="reason"
-              placeholder="e.g., Sick, Traffic, Appointment"
-              value={formData.reason}
+              id="notes"
+              placeholder="Any additional relevant information."
+              value={formData.notes}
               onChange={handleChange}
               rows={3}
               className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
@@ -365,4 +410,4 @@ const AttendanceAddPage: React.FC = () => {
   );
 };
 
-export default AttendanceAddPage;
+export default StudentHealthRecordAddPage;

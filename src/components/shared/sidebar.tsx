@@ -20,6 +20,24 @@ import {
   ShieldAlert,
   ClipboardList,
   ClipboardSignature,
+  School,
+  FileCheck2,
+  BookOpen,
+  Wallet,
+  ReceiptText,
+  CreditCard,
+  FileText,
+  Library as LibraryIcon,
+  ClipboardListIcon,
+  Book,
+  BarChart3,
+  Shield,
+  ScanLine,
+  MessageCircle,
+  Megaphone,
+  Send,
+  UserSquare,
+  UserCircle2,
 } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 
@@ -36,6 +54,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [isStudentSubmenuOpen, setIsStudentSubmenuOpen] = useState(false);
+  const [isAcademicsSubmenuOpen, setIsAcademicsSubmenuOpen] = useState(false);
+  const [isFinancialsSubmenuOpen, setIsFinancialsSubmenuOpen] = useState(false);
+  const [isLibrarySubmenuOpen, setIsLibrarySubmenuOpen] = useState(false);
+  const [isFeaturesSubmenuOpen, setIsFeaturesSubmenuOpen] = useState(false);
+  const [isCommunicationSubmenuOpen, setIsCommunicationSubmenuOpen] =
+    useState(false);
 
   const menuItems = useMemo(
     () => [
@@ -44,6 +68,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         icon: LayoutDashboard,
         key: "dashboard",
         path: "/",
+      },
+      {
+        name: "Admin",
+        icon: Shield,
+        key: "admin",
+        path: "/dashboard/admin/user-management",
+      },
+      {
+        name: "Staff",
+        icon: UserCircle2,
+        key: "staff",
+        path: "/dashboard/staff",
       },
       {
         name: "Students",
@@ -67,19 +103,179 @@ const Sidebar: React.FC<SidebarProps> = ({
             name: "Student Disciplinary Record",
             icon: ShieldAlert,
             key: "studentDisciplinaryRecord",
-            path: "/dashboard/student/disciplinary-record",
+            path: "/dashboard/student/studentDisciplinaryRecord",
           },
           {
-            name: "Student Enrollment Form",
+            name: "Student Health Records",
             icon: ClipboardList,
-            key: "studentEnrollmentForm",
-            path: "/dashboard/student/enrollment-form",
+            key: "studentHealthRecord",
+            path: "/dashboard/student/studentHealthRecord",
           },
           {
             name: "Student Registration Form",
             icon: ClipboardSignature,
             key: "studentRegistrationForm",
-            path: "/dashboard/student/registration-form",
+            path: "/dashboard/student/studentRegistrationForm",
+          },
+        ],
+      },
+      {
+        name: "Academics",
+        icon: GraduationCap,
+        key: "academics",
+        path: "/dashboard/academic",
+        children: [
+          {
+            name: "Calendar",
+            icon: CalendarDays,
+            key: "calendar",
+            path: "/dashboard/academic/calendar",
+          },
+          {
+            name: "Classes",
+            icon: School,
+            key: "classes",
+            path: "/dashboard/academic/classes",
+          },
+          {
+            name: "Exams",
+            icon: FileCheck2,
+            key: "exams",
+            path: "/dashboard/academic/exams",
+          },
+          {
+            name: "Report Cards",
+            icon: BarChart2,
+            key: "reportCards",
+            path: "/dashboard/academic/report-cards",
+          },
+          {
+            name: "Subjects",
+            icon: BookOpen,
+            key: "subjects",
+            path: "/dashboard/academic/subjects",
+          },
+        ],
+      },
+      {
+        name: "Library",
+        icon: LibraryIcon,
+        key: "library",
+        path: "/dashboard/library",
+        children: [
+          {
+            name: "Books",
+            icon: Book,
+            key: "books",
+            path: "/dashboard/library/books",
+          },
+          {
+            name: "Borrow / Return",
+            icon: ClipboardListIcon,
+            key: "borrowReturn",
+            path: "/dashboard/library/borrow-return",
+          },
+          {
+            name: "Reports",
+            icon: BarChart3,
+            key: "libraryReports",
+            path: "/dashboard/library/reports",
+          },
+        ],
+      },
+      {
+        name: "Financials",
+        icon: DollarSign,
+        key: "financials",
+        path: "/dashboard/fees",
+        children: [
+          {
+            name: "Expense",
+            icon: Wallet,
+            key: "expense",
+            path: "/dashboard/financials/expenses",
+          },
+          {
+            name: "Fees",
+            icon: DollarSign,
+            key: "fees",
+            path: "/dashboard/financials/fees",
+          },
+          {
+            name: "Payroll",
+            icon: ReceiptText,
+            key: "payroll",
+            path: "/dashboard/financials/payroll",
+          },
+          {
+            name: "Invoices",
+            icon: FileText,
+            key: "invoices",
+            path: "/dashboard/financials/invoices",
+          },
+        ],
+      },
+      {
+        name: "Features",
+        icon: ScanLine,
+        key: "features",
+        path: "/dashboard/features",
+        children: [
+          {
+            name: "Biometric / RFID",
+            icon: ScanLine,
+            key: "biometric",
+            path: "/dashboard/features/biometric",
+          },
+          {
+            name: "Payment Gateway",
+            icon: CreditCard,
+            key: "paymentGateway",
+            path: "/dashboard/features/payment-gateway",
+          },
+          {
+            name: "SMS Gateway",
+            icon: MessageCircle,
+            key: "smsGateway",
+            path: "/dashboard/features/sms-gateway",
+          },
+        ],
+      },
+      {
+        name: "Communication",
+        icon: Megaphone,
+        key: "communication",
+        path: "/dashboard/communication",
+        children: [
+          {
+            name: "Announcements",
+            icon: Megaphone,
+            key: "announcements",
+            path: "/dashboard/communication/announcements",
+          },
+          {
+            name: "Messaging",
+            icon: Send,
+            key: "messaging",
+            path: "/dashboard/communication/messaging",
+          },
+          {
+            name: "Staff Portal",
+            icon: UserSquare,
+            key: "staffPortal",
+            path: "/dashboard/communication/staff-portal",
+          },
+          {
+            name: "Student Portal",
+            icon: GraduationCap,
+            key: "studentPortal",
+            path: "/dashboard/communication/student-portal",
+          },
+          {
+            name: "Parent Portal",
+            icon: Users,
+            key: "parentPortal",
+            path: "/dashboard/communication/parent-portal",
           },
         ],
       },
@@ -96,16 +292,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         path: "/dashboard/academic/attendance",
       },
       {
-        name: "Academics",
-        icon: GraduationCap,
-        key: "academics",
-        path: "/dashboard/academics",
-      },
-      {
-        name: "Fees",
-        icon: DollarSign,
-        key: "fees",
-        path: "/dashboard/fees",
+        name: "Reporting",
+        icon: BarChart2,
+        key: "reporting",
+        path: "/dashboard/reporting/analytics",
       },
       {
         name: "Messages",
@@ -134,16 +324,64 @@ const Sidebar: React.FC<SidebarProps> = ({
     .sort((a, b) => b.path.length - a.path.length)
     .find((item) => pathname.startsWith(item.path));
 
-  // Automatically open student submenu if current path is under it
   useEffect(() => {
-    const studentItem = menuItems.find((item) => item.key === "students");
-    const isChildActive = studentItem?.children?.some((child) =>
-      pathname.startsWith(child.path)
-    );
-    if (isChildActive) {
-      setIsStudentSubmenuOpen(true);
-    }
+    const checkAndOpen = (key: string, setter: (value: boolean) => void) => {
+      const item = menuItems.find((i) => i.key === key);
+      const isActive = item?.children?.some((child) =>
+        pathname.startsWith(child.path)
+      );
+      if (isActive) setter(true);
+    };
+
+    checkAndOpen("students", setIsStudentSubmenuOpen);
+    checkAndOpen("academics", setIsAcademicsSubmenuOpen);
+    checkAndOpen("financials", setIsFinancialsSubmenuOpen);
+    checkAndOpen("library", setIsLibrarySubmenuOpen);
+    checkAndOpen("features", setIsFeaturesSubmenuOpen);
+    checkAndOpen("communication", setIsCommunicationSubmenuOpen);
   }, [pathname, menuItems]);
+
+  const getIsOpen = (key: string) => {
+    switch (key) {
+      case "students":
+        return isStudentSubmenuOpen;
+      case "academics":
+        return isAcademicsSubmenuOpen;
+      case "financials":
+        return isFinancialsSubmenuOpen;
+      case "library":
+        return isLibrarySubmenuOpen;
+      case "features":
+        return isFeaturesSubmenuOpen;
+      case "communication":
+        return isCommunicationSubmenuOpen;
+      default:
+        return false;
+    }
+  };
+
+  const toggleOpen = (key: string) => {
+    switch (key) {
+      case "students":
+        setIsStudentSubmenuOpen((prev) => !prev);
+        break;
+      case "academics":
+        setIsAcademicsSubmenuOpen((prev) => !prev);
+        break;
+      case "financials":
+        setIsFinancialsSubmenuOpen((prev) => !prev);
+        break;
+      case "library":
+        setIsLibrarySubmenuOpen((prev) => !prev);
+        break;
+      case "features":
+        setIsFeaturesSubmenuOpen((prev) => !prev);
+        break;
+      case "communication":
+        setIsCommunicationSubmenuOpen((prev) => !prev);
+        break;
+    }
+  };
 
   return (
     <>
@@ -190,12 +428,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                 const isChildActive = item.children.some((child) =>
                   pathname.startsWith(child.path)
                 );
+                const isOpen = getIsOpen(item.key);
+
                 return (
                   <li key={item.key}>
                     <button
-                      onClick={() =>
-                        setIsStudentSubmenuOpen(!isStudentSubmenuOpen)
-                      }
+                      onClick={() => toggleOpen(item.key)}
                       className={`w-full flex items-center py-3 text-[1.05rem] font-medium rounded-r-full transition-all
                         ${
                           isChildActive
@@ -208,7 +446,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       {!isCollapsed && (
                         <>
                           <span className="ml-4 flex-1">{item.name}</span>
-                          {isStudentSubmenuOpen ? (
+                          {isOpen ? (
                             <ChevronUp className="w-4 h-4" />
                           ) : (
                             <ChevronDown className="w-4 h-4" />
@@ -217,7 +455,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       )}
                     </button>
 
-                    {!isCollapsed && isStudentSubmenuOpen && (
+                    {!isCollapsed && isOpen && (
                       <ul className="ml-10 mt-1 space-y-1">
                         {item.children.map((child) => {
                           const isChildActive = pathname.startsWith(child.path);

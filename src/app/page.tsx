@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useEffect, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
-import { LogIn } from "lucide-react";
+import React, { useState, useEffect, createContext, useContext } from "react";
+import Sidebar from "@/components/shared/sidebar";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
 // In a real project, these would be imported from a UI library like Shadcn UI.
@@ -948,17 +949,21 @@ const FeeInformation: React.FC = () => {
 const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
-  // const [activeMenuItem, setActiveMenuItem] = useState("dashboard");
-  const [userRole, setUserRole] = useState<UserRole>("admin"); // Default role: admin
+  const [userRole, setUserRole] = useState<UserRole>("admin");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const toggleCollapse = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   // Close sidebar on larger screens if it was open for mobile
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024 && isSidebarOpen) {
+      if (window.innerWidth >= 1024) {
         setIsSidebarOpen(false);
       }
     };
@@ -966,116 +971,17 @@ const App: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [isSidebarOpen]);
 
-  const menuItems = [
-    {
-      name: "Dashboard",
-      icon: LayoutDashboard,
-      key: "dashboard",
-      path: "/",
-    },
-    {
-      name: "Students",
-      icon: Users,
-      key: "students",
-      path: "/dashboard/student",
-    },
-    {
-      name: "Timetable",
-      icon: CalendarDays,
-      key: "timetable",
-      path: "/timetable",
-    },
-    {
-      name: "Attendance",
-      icon: BarChart2,
-      key: "attendance",
-      path: "/dashboard/academic/attendance",
-    },
-    {
-      name: "Academics",
-      icon: GraduationCap,
-      key: "academics",
-      path: "/academics",
-    },
-    {
-      name: "Fees",
-      icon: DollarSign,
-      key: "fees",
-      path: "/fees",
-    },
-
-    {
-      name: "Settings",
-      icon: Settings,
-      key: "settings",
-      path: "/settings",
-    },
-    {
-      name: "Login",
-      icon: LogIn,
-      key: "login",
-      path: "/messages",
-    },
-  ];
-
-  const [activeMenuItem, setActiveMenuItem] = useState(() => {
-    const currentItem = menuItems.find((item) =>
-      pathname.startsWith(item.path)
-    );
-    return currentItem?.key || "dashboard";
-  });
-
   return (
     <UserRoleContext.Provider value={{ userRole, setUserRole }}>
       <div className="flex min-h-screen bg-gray-100 font-sans text-gray-800">
-        {/* Sidebar */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:relative lg:translate-x-0 lg:w-64 transition-transform duration-300 ease-in-out`}
-        >
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-2">
-              <GraduationCap className="w-8 h-8 text-blue-600" />
-              <h1 className="text-xl font-bold text-gray-900">SCHOOLAPP</h1>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={toggleSidebar}
-              aria-label="Close sidebar"
-            >
-              <X className="h-6 w-6 text-amber-50" />
-            </Button>
-          </div>
-          <nav className="mt-6">
-            <ul>
-              {menuItems.map((item) => (
-                <li key={item.key}>
-                  <Link
-                    href={item.path}
-                    onClick={() => {
-                      if (window.innerWidth < 1024) {
-                        setIsSidebarOpen(false);
-                      }
-                    }}
-                    className={`flex items-center py-3 px-6 text-lg font-medium rounded-r-full transition-all duration-200 ease-in-out
-                  ${
-                    activeMenuItem === item.key
-                      ? "bg-blue-100 text-blue-700 border-l-4 border-blue-700"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                  >
-                    <item.icon className="w-6 h-6 mr-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
+        {/* Sidebar Component */}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          isCollapsed={isSidebarCollapsed}
+          toggleSidebar={toggleSidebar}
+        />
 
+        {/* Overlay for mobile */}
         {isSidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
@@ -1086,8 +992,8 @@ const App: React.FC = () => {
         {/* Main Content */}
         <div
           className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-            isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
-          }`}
+            isSidebarCollapsed ? "ml-20" : "ml-64"
+          } ${isSidebarOpen ? "translate-x-64 lg:translate-x-0" : ""}`}
         >
           {/* Top Bar */}
           <header className="flex items-center justify-between p-6 bg-white border-b border-gray-200 shadow-sm">
@@ -1100,7 +1006,22 @@ const App: React.FC = () => {
             >
               <Menu className="h-6 w-6" />
             </Button>
-            {/* Role Selector */}
+            {/* Add collapse button for desktop */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden lg:flex mr-4"
+              onClick={toggleCollapse}
+              aria-label="Collapse sidebar"
+            >
+              {isSidebarCollapsed ? (
+                <ChevronRight className="h-6 w-6" />
+              ) : (
+                <ChevronLeft className="h-6 w-6" />
+              )}
+            </Button>
+
+            {/* Rest of your header content remains the same */}
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">
                 View as:
@@ -1177,7 +1098,7 @@ const App: React.FC = () => {
             </div>
           </header>
 
-          {/* Dashboard Content */}
+          {/* Rest of your main content remains exactly the same */}
           <main className="flex-1 overflow-y-auto p-6 lg:p-8">
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-900">

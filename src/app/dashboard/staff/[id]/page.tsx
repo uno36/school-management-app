@@ -1,4 +1,6 @@
 "use client";
+import Image from "next/image";
+import Link from "next/link";
 // frontend/app/(dashboard)/staff/[id]/page.tsx
 import React, { useState, useEffect } from "react";
 
@@ -54,7 +56,15 @@ interface StaffProfileData {
   designation: string;
   department: string;
   joiningDate: Date | null;
-  employmentStatus: "Full-time" | "Part-time" | "Contract" | "Intern";
+  employmentStatus:
+    | "Full-time"
+    | "Part-time"
+    | "Contract"
+    | "Intern"
+    | "Active"
+    | "On Leave"
+    | "Terminated"
+    | "Resigned";
   salaryInformation: string;
   bankDetails: string;
   emergencyContactName: string;
@@ -251,7 +261,7 @@ export default function StaffDetailsPage() {
           <h1 className="text-3xl font-bold text-gray-800">
             Staff Profile: {staff.firstName} {staff.lastName}
           </h1>
-          <a href={`/staff/${staff.id}/edit`}>
+          <Link href={`/staff/${staff.id}/edit`}>
             <Button variant="outline">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -269,12 +279,14 @@ export default function StaffDetailsPage() {
               </svg>
               Edit Profile
             </Button>
-          </a>
+          </Link>
         </div>
 
         {/* Staff Photo and Basic Info */}
         <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <img
+          <Image
+            width={150}
+            height={150}
             src={
               staff.photoUrl ||
               "https://placehold.co/150x150/cccccc/333333?text=No+Photo"

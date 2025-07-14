@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState, useEffect } from "react";
 
 // --- Mock Shadcn UI Component Mockups (Integrated for self-contained execution) ---
@@ -60,23 +61,6 @@ Button.displayName = "Button";
 
 // Mock Link component for navigation, assuming a Next.js-like environment
 // In a real browser environment without Next.js, this would be a simple <a> tag
-interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  href: string;
-  children: React.ReactNode;
-}
-
-const Link: React.FC<LinkProps> = ({ href, children, ...props }) => {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    window.history.pushState({}, "", href);
-    window.dispatchEvent(new PopStateEvent("popstate")); // Trigger re-render
-  };
-  return (
-    <a href={href} onClick={handleClick} {...props}>
-      {children}
-    </a>
-  );
-};
 
 // --- Mock Data Interface ---
 interface FeeInvoice {
@@ -86,6 +70,7 @@ interface FeeInvoice {
   dueDate: string;
   status: "Paid" | "Partially Paid" | "Pending" | "Overdue";
   feeType: string;
+  notes: string;
 }
 
 // --- Mock Data (Centralized for consistency across components) ---
@@ -98,6 +83,7 @@ const allMockFeeInvoices: FeeInvoice[] = [
     dueDate: "2025-07-15",
     status: "Pending",
     feeType: "Tuition",
+    notes: "",
   },
   {
     id: "INV002",
@@ -106,6 +92,7 @@ const allMockFeeInvoices: FeeInvoice[] = [
     dueDate: "2025-06-30",
     status: "Paid",
     feeType: "Transport",
+    notes: "",
   },
   {
     id: "INV003",
@@ -114,6 +101,7 @@ const allMockFeeInvoices: FeeInvoice[] = [
     dueDate: "2025-07-15",
     status: "Overdue",
     feeType: "Tuition",
+    notes: "",
   },
   {
     id: "INV004",
@@ -122,6 +110,7 @@ const allMockFeeInvoices: FeeInvoice[] = [
     dueDate: "2025-07-20",
     status: "Pending",
     feeType: "Lab Fee",
+    notes: "",
   },
   {
     id: "INV005",
@@ -130,6 +119,7 @@ const allMockFeeInvoices: FeeInvoice[] = [
     dueDate: "2025-08-01",
     status: "Pending",
     feeType: "Sports",
+    notes: "",
   },
 ];
 
